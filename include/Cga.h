@@ -12,10 +12,10 @@
 #include <windows.h>
 #include <fstream>
 
-#include "phenotype.h"
-#include "genotype.h"
-#include "CSpecies.h"
-#include "CParams.h"
+#include "C:\Users\Adele\Desktop\C++_Code\Neat_text\include\phenotype.h"
+#include "C:\Users\Adele\Desktop\C++_Code\Neat_text\include\genotype.h"
+#include "C:\Users\Adele\Desktop\C++_Code\Neat_text\include\CSpecies.h"
+#include "C:\Users\Adele\Desktop\C++_Code\Neat_text\include\CParams.h"
 
 using namespace std;
 

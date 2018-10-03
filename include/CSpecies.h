@@ -15,7 +15,7 @@
 #include <iomanip>
 #include <iostream>
 
-#include "genotype.h"
+#include "C:\Users\Adele\Desktop\C++_Code\Neat_text\include\genotype.h"
 
 using namespace std;
 

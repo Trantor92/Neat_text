@@ -11,10 +11,10 @@
 
 #include <vector>
 
-#include "phenotype.h"
-#include "utils.h"
-#include "CInnovation.h"
-#include "genes.h"
+#include "C:\Users\Adele\Desktop\C++_Code\Neat_text\include\phenotype.h"
+#include "C:\Users\Adele\Desktop\C++_Code\Neat_text\include\utils.h"
+#include "C:\Users\Adele\Desktop\C++_Code\Neat_text\include\CInnovation.h"
+#include "C:\Users\Adele\Desktop\C++_Code\Neat_text\include\genes.h"
 
 
 using namespace std;

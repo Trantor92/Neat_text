@@ -1,4 +1,4 @@
-#include "CParams.h"
+#include "C:\Users\Adele\Desktop\C++_Code\Neat_text\include\CParams.h"
 
 
 double CParams::dPi                       = 0;

@@ -12,9 +12,9 @@
 #include <vector>
 #include <math.h>
 
-#include "phenotype.h"
-#include "utils.h"
-#include "CParams.h"
+#include "C:\Users\Adele\Desktop\C++_Code\Neat_text\include\phenotype.h"
+#include "C:\Users\Adele\Desktop\C++_Code\Neat_text\include\utils.h"
+#include "C:\Users\Adele\Desktop\C++_Code\Neat_text\include\CParams.h"
 
 
 #define TRAIN 1

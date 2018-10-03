@@ -1,4 +1,4 @@
-#include "CSpecies.h"
+#include "C:\Users\Adele\Desktop\C++_Code\Neat_text\include\CSpecies.h"
 
 
 //----------------------- constructor ------------------------------------

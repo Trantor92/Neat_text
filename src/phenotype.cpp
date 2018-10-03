@@ -1,4 +1,4 @@
-#include "phenotype.h"
+#include "C:\Users\Adele\Desktop\C++_Code\Neat_text\include\phenotype.h"
 
 //------------------------------------ Sigmoid function ------------------------
 //  funzione di attivazione del neurone

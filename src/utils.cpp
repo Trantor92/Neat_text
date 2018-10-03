@@ -1,7 +1,7 @@
-#include "utils.h"
-#include "CParams.h"
 #include <math.h>
 
+#include "C:\Users\Adele\Desktop\C++_Code\Neat_text\include\utils.h"
+#include "C:\Users\Adele\Desktop\C++_Code\Neat_text\include\CParams.h"
 
 //crea una cartella al indirizzo_cartella nominando con nome_cartella
 void crea_cartella(char *indirizzo_cartella, string nome_cartella)

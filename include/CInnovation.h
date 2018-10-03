@@ -14,9 +14,9 @@
 #include <fstream>
 #include <iomanip>
 
-#include "utils.h"
-#include "genotype.h"
-#include "phenotype.h"
+#include "C:\Users\Adele\Desktop\C++_Code\Neat_text\include\utils.h"
+#include "C:\Users\Adele\Desktop\C++_Code\Neat_text\include\genotype.h"
+#include "C:\Users\Adele\Desktop\C++_Code\Neat_text\include\phenotype.h"
 
 using namespace std;
 
