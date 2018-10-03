@@ -134,7 +134,7 @@ void CBrain::Reset()
 //------------------------------------------------------------------------
 bool CBrain::Write_output(string name_file_output, bool is_train)
 {
-	//apertura del file in scrittura
+/*	//apertura del file in scrittura
 	ofstream out(name_file_output);
 
 	if (!out)
@@ -197,7 +197,7 @@ bool CBrain::Write_output(string name_file_output, bool is_train)
 			out << endl;
 		}
 		
-	}
+	}*/
 
 	return true;
 }

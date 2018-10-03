@@ -86,16 +86,20 @@ CController::~CController()
 bool CController::Update(ofstream &out0, ofstream &out1, ofstream &out2, ofstream &out3)
 {
 
+	/*comincerei mettendo solo il train. in particolare metterei nella funzione update la funzione 
+	che calcola la fitness in quanto già in fase di previsione si conosce la performance.
+	si può cominciare calcolando il numero di lettere prese, magari premiando le lettere prese in modo consecutivo*/
+
 		for (int i = 0; i<m_NumBrains; ++i)
 		{
 			//calcola le previsioni dei Brains nei confronti del Training Set
-			if (!m_vecBrains[i].Update(CParams::TrainingInputs))
+			/*if (!m_vecBrains[i].Update(CParams::TrainingInputs))
 			{
 				//error
 				MessageBox(m_hwndMain, L"Wrong amount of NN inputs!", L"Error", MB_OK);
 
 				return false;
-			}
+			}*/
 
 			//calcola la fitness dei Brains
 			m_vecBrains[i].EndOfRunCalculations(CParams::TrainingOutputs);
@@ -125,6 +129,8 @@ bool CController::Update(ofstream &out0, ofstream &out1, ofstream &out2, ofstrea
 
 		//Restituisce i migliori fenotipi della generazione precedente; prima della chiamata Epoch.
 		vector<CNeuralNet*> pBestBrains = m_pPop->GetBestPhenotypesFromLastGeneration();
+		/*se si riuscisse dalla chiamata sopra a restituire tutto quello che serve per lo stampaggio
+		delle statistiche che viene dopo sarebbe molto comodo*/
 			
 		
 
@@ -137,13 +143,13 @@ bool CController::Update(ofstream &out0, ofstream &out1, ofstream &out2, ofstrea
 		{
 			m_vecBestBrains[i].InsertNewBrain(pBestBrains[i]);
 
-			if (!m_vecBestBrains[i].Update(CParams::TrainingInputs))
+			/*if (!m_vecBestBrains[i].Update(CParams::TrainingInputs))
 			{
 				//error
 				MessageBox(m_hwndMain, L"Wrong amount of NN inputs!", L"Error", MB_OK);
 
 				return false;
-			}
+			}*/
 
 			fit_perc = m_vecBestBrains[i].EndOfRunCalculations(CParams::TrainingOutputs);
 				
@@ -197,7 +203,7 @@ bool CController::Update(ofstream &out0, ofstream &out1, ofstream &out2, ofstrea
 			//ripulisce gli oggetti del brain poichè ora li applico al test set
 			m_vecBestBrains[i].Reset();
 			
-
+			/*
 			if (!m_vecBestBrains[i].Update(CParams::TestInputs))
 			{
 				//error
@@ -207,7 +213,7 @@ bool CController::Update(ofstream &out0, ofstream &out1, ofstream &out2, ofstrea
 			}
 
 			fit_perc = m_vecBestBrains[i].EndOfRunCalculations(CParams::TestOutputs, true);//gli dico che sono per il test
-
+			*/
 			if (i == 0)
 			{
 				out0 << m_vecBestBrains[i].Fitness_test() << "\t" << fit_perc;

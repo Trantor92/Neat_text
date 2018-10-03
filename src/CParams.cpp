@@ -50,7 +50,8 @@ string CParams::iNameTest;
 
 vector<vector<double>> CParams::TrainingOutputs;
 vector<vector<double>> CParams::TestOutputs;
-vector<vector<double>> CParams::TrainingInputs;
+//vector<vector<double>> CParams::TrainingInputs;
+vector<char> CParams::TrainingInputs;
 vector<vector<double>> CParams::TestInputs;
 
 vector<string> CParams::squadre_train; vector<string> CParams::squadre_test;
@@ -145,19 +146,17 @@ bool CParams::LoadInParameters(char* szFileName)
 	  return false;
   }
 
+  CParams::iNumInputs = CParams::iNumOutputs = 256;
 
+  char c;
 
-  int rows, n_out, n_in;
+  while (!train.eof())
+  {
+	  train.get(c);//le char vanno da -128 a 127 usually (256 valori)
 
-  double norm;
-
-  train >> rows; train >> CParams::iNumInputs; train >> CParams::iNumOutputs;
-  
-  n_in = CParams::iNumInputs; n_out = CParams::iNumOutputs;
-
-  string squadre;
- 
-  vector<double> temp; double lec;
+	  TrainingInputs.push_back(c);
+  }
+  /*
   for (int i = 0; i < rows; i++)
   {
 	  train >> ParamDescription; squadre = ParamDescription; squadre += "\t";
@@ -264,7 +263,7 @@ bool CParams::LoadInParameters(char* szFileName)
 
 	  TestOutputs.push_back(temp); temp.clear();
 
-  }
+  }*/
 
   return true;
 }

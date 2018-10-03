@@ -140,7 +140,8 @@ public:
   static string iNameTraining, iNameTest; //nomi dei file che contengono i dati
 
   //dati
-  static vector<vector<double>> TrainingInputs;
+ // static vector<vector<double>> TrainingInputs;
+  static vector<char> TrainingInputs;
   static vector<vector<double>> TrainingOutputs; static vector<string> squadre_train;
   static vector<vector<double>> TestInputs;
   static vector<vector<double>> TestOutputs; static vector<string> squadre_test;
