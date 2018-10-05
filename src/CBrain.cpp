@@ -14,21 +14,33 @@ CBrain::CBrain()
 //outputs deve avere size nulla poichè si utilizza il push_back, ciò viene fatto in Reset.
 //carica in outputs i valori di attivazione dei nodi output, per ogni evento caricato in Input
 //-----------------------------------------------------------------------
-bool CBrain::Update(vector<vector<double>> Inputs)
+bool CBrain::Update(vector<char> Inputs)
 {
+	vector<float> input; input.resize(CParams::iNumInputs);
 
-	if (GetPhenotype()->GetDepth() != -1)//profondità -1 è il valore di errore per dire che la rete è aciclica
+	int pos = Inputs[0] + 128; //posizione del bit hot nella codifica del carattere
+	input[pos] = 1; //input codificato 
+
+	output_char.push_back(Inputs[0]);
+
+	for (int c = 0; c < Inputs.size(); c++)//per tutti caratteri nel testo di training
 	{
-		for (int i_example = 0; i_example < Inputs.size(); i_example++)
-		{
-			outputs.push_back(m_pItsBrain->Update(Inputs[i_example], CNeuralNet::snapshot));
-		}
-	}
-	else
-	{//qualcosa è andato storto ed è arrivata fino a qui una rete aciclica
-		MessageBox(NULL, L"Error in Update a Brain, la rete è ciclica", L"ERROR", MB_OK);
-	}
+		//ho il vector di input codificato one-hot
+		outputs.push_back(m_pItsBrain->Update(input, CNeuralNet::active));
 
+		input[pos] = 0;
+		
+		int pos_out = Softmax(outputs[c]);//esegue la softmax sull'ouputs e restituisce la pos del max, magari definirla in utils.h
+
+		if (Inputs[c] + 128 == pos_out)
+			m_dFitness++;
+
+		pos = pos_out;
+		input[pos] = 1;//metto in input nel prossimo turno la previsione del turno corrente
+
+		output_char.push_back((char)(pos - 128));
+	}
+	
 	return true;
 }
 
@@ -119,10 +131,14 @@ double CBrain::EndOfRunCalculations(vector<vector<double>> TrueOutputs, bool is_
 
 void CBrain::Reset()
 {
+	m_dFitness = 0;//importante per il calcolo della fitness in update
+
 	for (int i = 0; i < outputs.size(); i++)
 		outputs[i].clear();
 
 	outputs.clear();
+
+	output_char.clear();
 
 	mean_sqe.clear();
 };
@@ -134,7 +150,7 @@ void CBrain::Reset()
 //------------------------------------------------------------------------
 bool CBrain::Write_output(string name_file_output, bool is_train)
 {
-/*	//apertura del file in scrittura
+	//apertura del file in scrittura
 	ofstream out(name_file_output);
 
 	if (!out)
@@ -142,15 +158,19 @@ bool CBrain::Write_output(string name_file_output, bool is_train)
 
 
 	///////////////// SCRITTURA ///////////////////////////
-	out << outputs.size() << endl;
+	//out << outputs.size() << endl;
 
-	for (int row = 0; row < outputs.size(); row++)
+	for (int row = 0; row < output_char.size(); row++)
 	{
 		if(is_train)//training set
 		{
-			out << CParams::squadre_train[row] << "\t";
 
-			for (int col = 0; col < CParams::TrainingInputs[row].size(); col++)//input
+			out << output_char[row];
+
+
+			//out << CParams::squadre_train[row] << "\t";
+
+			/*for (int col = 0; col < CParams::TrainingInputs[row].size(); col++)//input
 			{
 				out << CParams::TrainingInputs[row][col] << "\t";
 			}
@@ -169,7 +189,7 @@ bool CBrain::Write_output(string name_file_output, bool is_train)
 				out << outputs[row][col] << "\t";
 			}
 
-			out << endl;
+			out << endl;*/
 		}
 		else//test set
 		{
@@ -197,7 +217,7 @@ bool CBrain::Write_output(string name_file_output, bool is_train)
 			out << endl;
 		}
 		
-	}*/
+	}
 
 	return true;
 }

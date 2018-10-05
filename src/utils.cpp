@@ -37,3 +37,31 @@ void crea_cartella(char *indirizzo_cartella, string nome_cartella)
 	system(stringa);//esegue la stringa su riga di comando
 }
 
+
+int Softmax(vector<float> &output)//esegue il softmax di un array, modificandone i valori e restituendo la posizione
+                                  // del valore del massimo
+{
+	float sum = 0;
+
+	int pos_max = 0;
+	float max = output[pos_max];
+
+	for (int i = 0; i < output.size(); i++)
+	{
+		sum += exp(output[i]);
+
+		if (output[i] > max)
+		{
+			max = output[i];
+
+			pos_max = i;
+		}
+	}
+
+	for (int i = 0; i < output.size(); i++)//rinormalizza l'output
+	{
+		output[i] /= sum;
+	}
+
+	return pos_max;
+}

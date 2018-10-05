@@ -43,11 +43,11 @@ CNeuralNet::~CNeuralNet()
 //
 //	ritorna un vector delle attivazioni dei neuroni di output.
 //------------------------------------------------------------------------
-vector<double> CNeuralNet::Update(const vector<double> &inputs,
+vector<float> CNeuralNet::Update(const vector<float> &inputs,
                                   const run_type        type)
 {
   //crea un vector in cui mettere le attivazioni degli output
-  vector<double>	outputs;
+  vector<float>	outputs;
 
   //Se si è scelto snapshot, allora si itera percorrendo tutta la rete, 
   //un numero di volte pari alla profondità. Se si è scelto active si ritorna il 

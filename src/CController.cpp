@@ -93,16 +93,16 @@ bool CController::Update(ofstream &out0, ofstream &out1, ofstream &out2, ofstrea
 		for (int i = 0; i<m_NumBrains; ++i)
 		{
 			//calcola le previsioni dei Brains nei confronti del Training Set
-			/*if (!m_vecBrains[i].Update(CParams::TrainingInputs))
+			if (!m_vecBrains[i].Update(CParams::TrainingInputs))
 			{
 				//error
 				MessageBox(m_hwndMain, L"Wrong amount of NN inputs!", L"Error", MB_OK);
 
 				return false;
-			}*/
+			}
 
 			//calcola la fitness dei Brains
-			m_vecBrains[i].EndOfRunCalculations(CParams::TrainingOutputs);
+			//m_vecBrains[i].EndOfRunCalculations(CParams::TrainingOutputs);
 		}
 
 
@@ -143,35 +143,35 @@ bool CController::Update(ofstream &out0, ofstream &out1, ofstream &out2, ofstrea
 		{
 			m_vecBestBrains[i].InsertNewBrain(pBestBrains[i]);
 
-			/*if (!m_vecBestBrains[i].Update(CParams::TrainingInputs))
+			if (!m_vecBestBrains[i].Update(CParams::TrainingInputs))
 			{
 				//error
 				MessageBox(m_hwndMain, L"Wrong amount of NN inputs!", L"Error", MB_OK);
 
 				return false;
-			}*/
+			}
 
-			fit_perc = m_vecBestBrains[i].EndOfRunCalculations(CParams::TrainingOutputs);
+			//fit_perc = m_vecBestBrains[i].EndOfRunCalculations(CParams::TrainingOutputs);
 				
 
 			////////////// STAMPA DELLE PRESTAZIONI NEL RELATIVO FILE ////////////////////////////
 
 			if (i == 0)
 			{
-				out0 << m_vecBestBrains[i].Fitness() << "\t" << fit_perc << "\t";
+				out0 << m_vecBestBrains[i].Fitness() << endl;/*<< "\t" << fit_perc << "\t";
 
 				for (int i_out = 0; i_out < m_vecBestBrains[i].mean_sqe.size(); i_out++)
 				{
 					out0 << m_vecBestBrains[i].mean_sqe[i_out] << "\t";
 				}
-
+				*/
 
 				//stampa le attivazioni dei nodi output per ogni array di training 
 				string name_file_output = "Member_0\\Trainoutput_" + itos(m_iGenerations - 1) + ".txt";
 				
 				m_vecBestBrains[i].Write_output(name_file_output,TRAIN);
 			}
-			else if (i == 1)
+			/*else if (i == 1)
 			{
 				out1 << m_vecBestBrains[i].Fitness() << "\t" << fit_perc << "\t";
 				
@@ -198,7 +198,7 @@ bool CController::Update(ofstream &out0, ofstream &out1, ofstream &out2, ofstrea
 					out3 << m_vecBestBrains[i].mean_sqe[i_out] << "\t";
 				}
 
-			}
+			}*/
 
 			//ripulisce gli oggetti del brain poichè ora li applico al test set
 			m_vecBestBrains[i].Reset();
@@ -213,7 +213,7 @@ bool CController::Update(ofstream &out0, ofstream &out1, ofstream &out2, ofstrea
 			}
 
 			fit_perc = m_vecBestBrains[i].EndOfRunCalculations(CParams::TestOutputs, true);//gli dico che sono per il test
-			*/
+			
 			if (i == 0)
 			{
 				out0 << m_vecBestBrains[i].Fitness_test() << "\t" << fit_perc;
@@ -240,7 +240,7 @@ bool CController::Update(ofstream &out0, ofstream &out1, ofstream &out2, ofstrea
 
 			}
 
-			m_vecBestBrains[i].Reset();
+			m_vecBestBrains[i].Reset();*/
 		}
 
 

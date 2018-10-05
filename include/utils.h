@@ -133,4 +133,6 @@ inline wstring s2ws(const std::string& s)
 //crea una directory
 void crea_cartella(char *indirizzo_cartella, string nome_cartella);
 
+int Softmax(vector<float> &output);
+
 #endif

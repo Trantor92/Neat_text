@@ -35,17 +35,20 @@ private:
 	double          m_dFitness_test;
 
 	//attivazioni dei nodi di output. Viene caricato in CBrain::Update()
-	vector<vector<double>> outputs;
+	vector<vector<float>> outputs;
 
 public:
 
 	//array delle sigma2
 	vector<double> mean_sqe;
 
+	//char predette
+	vector<char> output_char;
+
 	CBrain();
 
 	//calcola le attivazioni dei nodi di output per ogni array di Input
-	bool			Update(vector<vector<double>> Input);
+	bool			Update(vector<char> Input);
 
 	//fra le altre cose, cancella outputs.
 	void			Reset();

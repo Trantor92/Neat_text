@@ -134,7 +134,7 @@ public:
   enum run_type{snapshot, active};
 
   //esegue il calcolo della rete neurale, facendo 'diffondere' le attivazioni degli input
-  vector<double>  Update(const vector<double> &inputs, const run_type type);
+  vector<float>  Update(const vector<float> &inputs, const run_type type);
 
   //funzione di attivazione del neurone
   double		  Sigmoid(float netinput, float response);
