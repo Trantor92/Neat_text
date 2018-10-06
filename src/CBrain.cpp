@@ -16,6 +16,9 @@ CBrain::CBrain()
 //-----------------------------------------------------------------------
 bool CBrain::Update(vector<char> Inputs)
 {
+	m_dFitness = 0;//importante per il calcolo della fitness
+
+
 	vector<float> input; input.resize(CParams::iNumInputs);
 
 	int pos = Inputs[0] + 128; //posizione del bit hot nella codifica del carattere
@@ -23,22 +26,22 @@ bool CBrain::Update(vector<char> Inputs)
 
 	output_char.push_back(Inputs[0]);
 
-	for (int c = 0; c < Inputs.size(); c++)//per tutti caratteri nel testo di training
+	for (int c = 1; c < Inputs.size(); c++)//per tutti caratteri nel testo di training
 	{
 		//ho il vector di input codificato one-hot
 		outputs.push_back(m_pItsBrain->Update(input, CNeuralNet::active));
 
 		input[pos] = 0;
 		
-		int pos_out = Softmax(outputs[c]);//esegue la softmax sull'ouputs e restituisce la pos del max, magari definirla in utils.h
+		int pos_out = Softmax(outputs[c-1]);//esegue la softmax sull'ouputs e restituisce la pos del max, magari definirla in utils.h
 
 		if (Inputs[c] + 128 == pos_out)
 			m_dFitness++;
 
-		pos = pos_out;
+		pos = Inputs[c] + 128;
 		input[pos] = 1;//metto in input nel prossimo turno la previsione del turno corrente
 
-		output_char.push_back((char)(pos - 128));
+		output_char.push_back((char)(pos_out - 128));
 	}
 	
 	return true;
@@ -131,8 +134,7 @@ double CBrain::EndOfRunCalculations(vector<vector<double>> TrueOutputs, bool is_
 
 void CBrain::Reset()
 {
-	m_dFitness = 0;//importante per il calcolo della fitness in update
-
+	
 	for (int i = 0; i < outputs.size(); i++)
 		outputs[i].clear();
 

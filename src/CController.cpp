@@ -90,8 +90,13 @@ bool CController::Update(ofstream &out0, ofstream &out1, ofstream &out2, ofstrea
 	che calcola la fitness in quanto già in fase di previsione si conosce la performance.
 	si può cominciare calcolando il numero di lettere prese, magari premiando le lettere prese in modo consecutivo*/
 
+#pragma omp parallel for
+
 		for (int i = 0; i<m_NumBrains; ++i)
 		{
+			m_vecBrains[i].Update(CParams::TrainingInputs);
+
+			/*
 			//calcola le previsioni dei Brains nei confronti del Training Set
 			if (!m_vecBrains[i].Update(CParams::TrainingInputs))
 			{
@@ -99,7 +104,7 @@ bool CController::Update(ofstream &out0, ofstream &out1, ofstream &out2, ofstrea
 				MessageBox(m_hwndMain, L"Wrong amount of NN inputs!", L"Error", MB_OK);
 
 				return false;
-			}
+			}*/
 
 			//calcola la fitness dei Brains
 			//m_vecBrains[i].EndOfRunCalculations(CParams::TrainingOutputs);
@@ -137,26 +142,47 @@ bool CController::Update(ofstream &out0, ofstream &out1, ofstream &out2, ofstrea
 
 		/////////////// Calcolo delle prestazioni complete per i migliori individui ////////////////////////////
 
-		double fit_perc;//prestazioni in termini di Rate%
 
+		
+		for (int i = 0; i < m_vecBestBrains.size(); ++i)
+		{
+			m_vecBestBrains[i].InsertNewBrain(pBestBrains[i]);
+		}
+
+
+		//per ora faccio solo il milgiore
+
+		m_vecBestBrains[0].Update(CParams::TrainingInputs);
+
+		//stampa le attivazioni dei nodi output per ogni array di training 
+		string name_file_output = "Member_0\\Trainoutput_" + itos(m_iGenerations - 1) + ".txt";
+
+		m_vecBestBrains[0].Write_output(name_file_output, TRAIN);
+		out0 << m_vecBestBrains[0].Fitness() << endl;
+
+		m_vecBestBrains[0].Reset();
+
+
+		//double fit_perc;//prestazioni in termini di Rate%
+		/*
 		for (int i = 0; i<m_vecBestBrains.size(); ++i)
 		{
 			m_vecBestBrains[i].InsertNewBrain(pBestBrains[i]);
 
-			if (!m_vecBestBrains[i].Update(CParams::TrainingInputs))
+			/*if (!m_vecBestBrains[i].Update(CParams::TrainingInputs))
 			{
 				//error
 				MessageBox(m_hwndMain, L"Wrong amount of NN inputs!", L"Error", MB_OK);
 
 				return false;
-			}
+			}*/
 
 			//fit_perc = m_vecBestBrains[i].EndOfRunCalculations(CParams::TrainingOutputs);
 				
 
 			////////////// STAMPA DELLE PRESTAZIONI NEL RELATIVO FILE ////////////////////////////
 
-			if (i == 0)
+			/*if (i == 0)
 			{
 				out0 << m_vecBestBrains[i].Fitness() << endl;/*<< "\t" << fit_perc << "\t";
 
@@ -164,13 +190,13 @@ bool CController::Update(ofstream &out0, ofstream &out1, ofstream &out2, ofstrea
 				{
 					out0 << m_vecBestBrains[i].mean_sqe[i_out] << "\t";
 				}
-				*/
+				/*
 
 				//stampa le attivazioni dei nodi output per ogni array di training 
 				string name_file_output = "Member_0\\Trainoutput_" + itos(m_iGenerations - 1) + ".txt";
 				
 				m_vecBestBrains[i].Write_output(name_file_output,TRAIN);
-			}
+			}*/
 			/*else if (i == 1)
 			{
 				out1 << m_vecBestBrains[i].Fitness() << "\t" << fit_perc << "\t";
@@ -201,7 +227,7 @@ bool CController::Update(ofstream &out0, ofstream &out1, ofstream &out2, ofstrea
 			}*/
 
 			//ripulisce gli oggetti del brain poichè ora li applico al test set
-			m_vecBestBrains[i].Reset();
+			//m_vecBestBrains[i].Reset();
 			
 			/*
 			if (!m_vecBestBrains[i].Update(CParams::TestInputs))
@@ -240,8 +266,8 @@ bool CController::Update(ofstream &out0, ofstream &out1, ofstream &out2, ofstrea
 
 			}
 
-			m_vecBestBrains[i].Reset();*/
-		}
+			m_vecBestBrains[i].Reset();
+		}*/
 
 
 
@@ -279,12 +305,12 @@ void CController::RenderNetworks(HDC &surface)
 
 
 	//disegna i fenotipi. In ordine di fitness, da destra a sinistra e dall'alto al basso
-	m_vecBestBrains[0].DrawNet(surface, 0, cxInfo / 2, cyInfo / 2, 0);
+	/*m_vecBestBrains[0].DrawNet(surface, 0, cxInfo / 2, cyInfo / 2, 0);
 	m_vecBestBrains[1].DrawNet(surface, cxInfo / 2, cxInfo, cyInfo / 2, 0);
 	m_vecBestBrains[2].DrawNet(surface, 0, cxInfo / 2, cyInfo, cyInfo / 2);
-	m_vecBestBrains[3].DrawNet(surface, cxInfo / 2, cxInfo, cyInfo, cyInfo / 2);
+	m_vecBestBrains[3].DrawNet(surface, cxInfo / 2, cxInfo, cyInfo, cyInfo / 2);*/
 	
-
+	m_vecBestBrains[0].DrawNet(surface, 0, cxInfo, cyInfo, 0);
 }
 
 //------------------------------------Render()--------------------------------------
@@ -337,7 +363,7 @@ void CController::PlotStats(HDC surface)const
 		s = s2ws(s_temp);
 		TextOut(surface, 5, 105, s.c_str(), s.size());
 
-		s_temp = "Fitness 2: " + ftos(m_vecBestBrains[1].Fitness()) + "        " + ftos(m_vecBestBrains[1].Fitness_test());
+/*		s_temp = "Fitness 2: " + ftos(m_vecBestBrains[1].Fitness()) + "        " + ftos(m_vecBestBrains[1].Fitness_test());
 		s = s2ws(s_temp);
 		TextOut(surface, 5, 125, s.c_str(), s.size());
 
@@ -347,7 +373,7 @@ void CController::PlotStats(HDC surface)const
 
 		s_temp = "Fitness 4: " + ftos(m_vecBestBrains[3].Fitness()) + "        " + ftos(m_vecBestBrains[3].Fitness_test());
 		s = s2ws(s_temp);
-		TextOut(surface, 5, 165, s.c_str(), s.size());
+		TextOut(surface, 5, 165, s.c_str(), s.size());*/
 	}
 }
 

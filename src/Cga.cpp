@@ -132,14 +132,14 @@ vector<CNeuralNet*> Cga::Epoch(const vector<double> &FitnessScores)
   name = "Member_0\\dbg_BestGenome_gen" + itos(m_iGeneration) + ".txt";
   WriteGenome(name, 0);//scrittura su file
 
-  name = "Member_1\\dbg_BestGenome_gen" + itos(m_iGeneration) + ".txt";
+  /*name = "Member_1\\dbg_BestGenome_gen" + itos(m_iGeneration) + ".txt";
   WriteGenome(name, 1);//scrittura su file
 
   name = "Member_2\\dbg_BestGenome_gen" + itos(m_iGeneration) + ".txt";
   WriteGenome(name, 2);//scrittura su file
 
   name = "Member_3\\dbg_BestGenome_gen" + itos(m_iGeneration) + ".txt";
-  WriteGenome(name, 3);//scrittura su file
+  WriteGenome(name, 3);//scrittura su file*/
 
 
 
@@ -327,7 +327,7 @@ vector<CNeuralNet*> Cga::Epoch(const vector<double> &FitnessScores)
 void Cga::SortAndRecord()
 {
   //si ordinano gli individui per fitness decrescente
-  sort(m_vecGenomes.begin(), m_vecGenomes.end());
+  //sort(m_vecGenomes.begin(), m_vecGenomes.end());//viene già fatto in speciate()
 
   //si controlla che se il milgior genoma abbia superato il record
   if (m_vecGenomes[0].Fitness() > m_dBestEverFitness)
@@ -367,6 +367,8 @@ vector<CNeuralNet*> Cga::GetBestPhenotypesFromLastGeneration()
   for (int gen=0; gen<m_vecBestGenomes.size(); ++gen)
   {
     brains.push_back(m_vecBestGenomes[gen].CreatePhenotype());
+
+	  //brains.push_back(m_vecBestGenomes[gen].Phenotype());
   }
 
   return brains;
@@ -801,14 +803,14 @@ CGenome Cga::Crossover(CGenome& mum, CGenome& dad)
                      mum.NumOutputs());
 
 
-
+  /* non serve più perche si ammettono reti ricorrenti
   //si construsce e associa il fenotipo 
   babyGenome.CreatePhenotype();
 
   //si controlla che il figlio non sia ciclico, altrimenti si restituisce di default
   //il genoma dellla madre
   if (babyGenome.Depth() == -1)
-	  babyGenome = mum;
+	  babyGenome = mum;*/
 
 
 
@@ -937,11 +939,11 @@ vector<double> Cga::ResetAndKill(vector<double> FitnessScores)
 	spc++;
   }
 
-  //cancelliamo anche i vecchi fenotipi
-  for (int gen=0; gen<m_vecGenomes.size(); ++gen)
+  //cancelliamo anche i vecchi fenotipi //PROVO A NON FARLO IN MODO TALE CHE RIMANGA SALVATO PER I BEST
+  /*for (int gen=0; gen<m_vecGenomes.size(); ++gen)
   {
     m_vecGenomes[gen].DeletePhenotype();
-  }
+  }*/
 
   return FitnessScores;
 }

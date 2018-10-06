@@ -37,7 +37,7 @@ double CParams::dOldAgePenalty            = 0;
 double CParams::dCrossoverRate            = 0;
 int CParams::iMaxNumberOfSpecies          = 0;
 
-int CParams::iNumBestBrains				  = 4;
+int CParams::iNumBestBrains				  = 1;
 
 
 int CParams::i_MaxDepth = 100;

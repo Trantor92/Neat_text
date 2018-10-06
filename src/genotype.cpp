@@ -106,7 +106,7 @@ CGenome::CGenome(const CGenome& g)
     m_GenomeID   = g.m_GenomeID;
     m_vecNeurons   = g.m_vecNeurons;
     m_vecLinks   = g.m_vecLinks;
-    m_pPhenotype = NULL;						//no need to perform a deep copy
+    m_pPhenotype = NULL;			//no need to perform a deep copy
     m_dFitness   = g.m_dFitness;
     m_dAdjustedFitness = g.m_dAdjustedFitness;
     m_iNumInputs  = g.m_iNumInputs;
@@ -126,7 +126,7 @@ CGenome& CGenome::operator =(const CGenome& g)
       m_GenomeID         = g.m_GenomeID;
       m_vecNeurons         = g.m_vecNeurons;
       m_vecLinks         = g.m_vecLinks;
-      m_pPhenotype       = NULL;				//no need to perform a deep copy
+      m_pPhenotype       = NULL;//prima questo era tolto così spero di sveltire il codice in sort and record
       m_dFitness         = g.m_dFitness;
       m_dAdjustedFitness = g.m_dAdjustedFitness;
       m_iNumInputs        = g.m_iNumInputs;
@@ -134,6 +134,8 @@ CGenome& CGenome::operator =(const CGenome& g)
       m_dAmountToSpawn   = g.m_dAmountToSpawn;
 	  m_iNetDepth = g.m_iNetDepth;
     }
+
+	  //memcpy(m_pPhenotype, g.m_pPhenotype, sizeof(CNeuralNet));
 
     return *this;
 }
@@ -203,9 +205,9 @@ CNeuralNet* CGenome::CreatePhenotype()
   }
 
 
- //calcolo e assegnazione della profondità del fenotipo
-  SetDepth(CalculateDepthPhenotype(vecNeurons));
-  
+  //calcolo e assegnazione della profondità del fenotipo
+  //SetDepth(CalculateDepthPhenotype(vecNeurons));
+  SetDepth(1);//lo faccio a caso per evitare il calcolo della profondità che prende 13 s per fenotipo
 
   //Ora i nodi contengono tutte le informazioni sulle connessioni e una rete neurale (fenotipo)
   //può esseren creata a partire da essi.
@@ -471,6 +473,7 @@ void CGenome::AddLink(double       MutationRate,
 	  }
 	  else//la coppia è valida
 	  {
+		  /* non serve più perchè si ammettono reti ricorrenti
 		  //controllo che la rete non diventi ciclica con l'aggiunta di questo link
 		  CreatePhenotype(ID_neuron1, ID_neuron2);
 
@@ -481,7 +484,8 @@ void CGenome::AddLink(double       MutationRate,
 		  }
 		  else//la coppia è valida e non cerco più
 			  NumTrysToAddLink = 0;
-
+			  */
+		  NumTrysToAddLink = 0;
 	  }
   }
 
