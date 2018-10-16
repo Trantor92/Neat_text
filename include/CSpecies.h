@@ -15,7 +15,7 @@
 #include <iomanip>
 #include <iostream>
 
-#include "C:\Users\Adele\Desktop\C++_Code\Neat_text\include\genotype.h"
+#include "genotype.h"
 
 using namespace std;
 
@@ -40,7 +40,7 @@ private:
   int               m_iSpeciesID;
 	
   //migliori fitness, mai raggiunta, dalla specie
-  double            m_dBestFitness;
+  float            m_dBestFitness;
   
   //numero di generazioni dall'ultimo miglioramento di fitness (aumento di m_dBestFitness).
   //Questa informazione serve per eliminare le specie che non migliorano più
@@ -50,7 +50,7 @@ private:
   int               m_iAge;
   
   //numero di figli concessi alla specie in fase di riproduzione
-  double            m_dSpawnsRqd;
+  float            m_dSpawnsRqd;
 
 
 public:
@@ -68,6 +68,7 @@ public:
 
   //funzioni necessarie al corretto funzionamento della classificazione in specie
   void    Purge();
+  void Purge_specializzata();
   void	  Purge_preliminar();
 
   //calcola quanti figli sono concessi a questa specie. funzione delle fitness modificate
@@ -120,7 +121,7 @@ public:
   void				SetLeader(CGenome new_leader) { m_Leader = new_leader; }
   void				SetLeader() { m_Leader = *m_vecMembers[0]; }
 
-  double			 SpeciesLeaderFitness()const { return m_Leader.Fitness(); }
+  float			 SpeciesLeaderFitness()const { return m_Leader.Fitness(); }
 
 
   vector<CGenome*>	GenomesOfMembers()const { return m_vecMembers; }
@@ -129,11 +130,11 @@ public:
 
   int				ID()const { return m_iSpeciesID; }
 
-  double			BestFitness()const { return m_dBestFitness; }
+  float			BestFitness()const { return m_dBestFitness; }
 
   int				Age()const { return m_iAge; }
 
-  double			NumToSpawn()const { return m_dSpawnsRqd; }
+  float			NumToSpawn()const { return m_dSpawnsRqd; }
 
 
   int				GensNoImprovement()const { return m_iGensNoImprovement; }

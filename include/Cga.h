@@ -12,10 +12,10 @@
 #include <windows.h>
 #include <fstream>
 
-#include "C:\Users\Adele\Desktop\C++_Code\Neat_text\include\phenotype.h"
-#include "C:\Users\Adele\Desktop\C++_Code\Neat_text\include\genotype.h"
-#include "C:\Users\Adele\Desktop\C++_Code\Neat_text\include\CSpecies.h"
-#include "C:\Users\Adele\Desktop\C++_Code\Neat_text\include\CParams.h"
+#include "phenotype.h"
+#include "genotype.h"
+#include "CSpecies.h"
+#include "CParams.h"
 
 using namespace std;
 
@@ -53,12 +53,12 @@ private:
 
 
 	//variabili che servono nel calcolo del numero di figli associare alle specie
-	double            m_dTotFitAdj,
+	float            m_dTotFitAdj,
 					  m_dAvFitAdj;
 
 
 	//fitness migliore mai trovata fino ad ora
-	double            m_dBestEverFitness;
+	float            m_dBestEverFitness;
 
 
 	
@@ -70,7 +70,7 @@ private:
 	//Nel caso in cui la specie non migliori, questa viene eliminata isieme a tutti i genomi membri dalla
 	//popolazione.
 	//Restituisce un vector contenente la fitness dei genomi sopravvissuti.
-	vector<double>		ResetAndKill(vector<double> FitnessScores);
+	vector<float>		ResetAndKill(vector<float> FitnessScores);
 
 	//speciazione preliminare, serve nella funzione precedente per uccidere in modo efficace
 	//le specie che non migliorano
@@ -112,8 +112,7 @@ private:
 	//tiene traccia dei migliori individui sui quali appunto ricade l'attenzione m_vecBestGenomes 
 	void				SortAndRecord();
 
-
-  
+	
 public:
 
 	//------------- constructor -----------------------------------
@@ -127,7 +126,7 @@ public:
 
 
 	//funzione che esegue una generazione dell'algoritmo genetico
-	vector<CNeuralNet*>	 Epoch(const vector<double> &FitnessScores);
+	vector<CNeuralNet*>	 Epoch(const vector<float> &FitnessScores);
 
 	//itera sui genomi che compongono la popolazione e ne crea i finotipi
 	vector<CNeuralNet*>  CreatePhenotypes();
@@ -150,6 +149,10 @@ public:
 	//scrive le specie in un file
 	bool                 SpeciesDump(string szFileName);
 
+	void Destroym_vecBestPhenotypes() {
+		for (int i = 0; i < m_vecBestGenomes.size(); ++i)
+			m_vecBestGenomes[i].DeletePhenotype();//DestroyPhenotype();
+	}
 
   
 	//-------------------- accessor methods ----------------------------------------
@@ -157,10 +160,10 @@ public:
 
 	int					NumSpecies()const{return m_vecSpecies.size();}
 
-	double				BestEverFitness()const{return m_dBestEverFitness;}
-	double				Fitness_Best(int pos) { return m_vecBestGenomes[pos].Fitness(); }
+	float				BestEverFitness()const{return m_dBestEverFitness;}
+	float				Fitness_Best(int pos) { return m_vecBestGenomes[pos].Fitness(); }
 
-	void				SetFitness(int genome, double fitness){m_vecGenomes[genome].SetFitness(fitness);}
+	void				SetFitness(int genome, float fitness){m_vecGenomes[genome].SetFitness(fitness);}
 
 };
 

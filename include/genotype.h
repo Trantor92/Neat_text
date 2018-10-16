@@ -11,10 +11,10 @@
 
 #include <vector>
 
-#include "C:\Users\Adele\Desktop\C++_Code\Neat_text\include\phenotype.h"
-#include "C:\Users\Adele\Desktop\C++_Code\Neat_text\include\utils.h"
-#include "C:\Users\Adele\Desktop\C++_Code\Neat_text\include\CInnovation.h"
-#include "C:\Users\Adele\Desktop\C++_Code\Neat_text\include\genes.h"
+#include "phenotype.h"
+#include "utils.h"
+#include "CInnovation.h"
+#include "genes.h"
 
 
 using namespace std;
@@ -50,13 +50,13 @@ private:
   int                     m_iNetDepth;
 
   //fitness
-  double                  m_dFitness;
+  float                  m_dFitness;
 
   //fitness modificata, in accordo con la specie in cui il genoma viene posto
-  double                  m_dAdjustedFitness;
+  float                  m_dAdjustedFitness;
 
   //numero di figli concessi a questo individuo
-  double                  m_dAmountToSpawn;
+  float                  m_dAmountToSpawn;
 
   //traccia locale del numero di nodi di input e di output
   int                     m_iNumInputs,
@@ -78,6 +78,8 @@ private:
   //ritorna vero se esiste già nel genoma un nodo avente questo numero identificativo
   //see CGenome::AddNeuron
   bool    AlreadyHaveThisNeuronID(const int ID);
+
+  
  
 
 public:
@@ -116,30 +118,39 @@ public:
 	//calcella il fenotipo
 	void            DeletePhenotype();
 
+
+	void	DestroyPhenotype() {
+		if (m_pPhenotype != NULL)
+			m_pPhenotype->~CNeuralNet();
+		//delete m_pPhenotype;
+	}
+
 	//inizializza i pesi a valori piccoli ]-1,1[. 
 	void            InitializeWeights();
 
 	//aggiunge un link al genoma con probabilità MutationRate
-	void            AddLink(double      MutationRate,
-                            CInnovation &innovation,
-                            int         NumTrysToAddLink);
+	void			AddLink(float       MutationRate,
+		CInnovation  &innovation,
+		int NumTrysToAddLink,
+		float	ChanceOfLooped,
+		int NumTrysToFindLoop);
 
 	//aggiunge un nodo al genoma con probabilità MutationRate
-	void			AddNeuron(double      MutationRate,
+	void			AddNeuron(float      MutationRate,
 							  CInnovation &innovation);
 
 	//questa funziona muta i pesi
-	void            MutateWeights(double  mut_rate,
-                                  double  prob_new_mut,
-                                  double  dMaxPertubation);
+	void            MutateWeights(float  mut_rate,
+                                  float  prob_new_mut,
+                                  float  dMaxPertubation);
 
 	//questa funzione muta il parametro beta della funzione di attivazione
-	void            MutateActivationResponse(double mut_rate,
-                                             double MaxPertubation);
+	void            MutateActivationResponse(float mut_rate,
+                                             float MaxPertubation);
 
 	//funzione di compatibilità, necessaria alla speciazione. 
 	//calcola la distanza fra questo e il genoma in argomento 
-	double          GetCompatibilityScore(const CGenome &genome);
+	float          GetCompatibilityScore(const CGenome &genome);
 
 	//ordina i geni dei link per numero d'innovazione crescente
 	void            SortGenes();
@@ -178,20 +189,20 @@ public:
 	int     NumInputs()const{return m_iNumInputs;}
 	int     NumOutputs()const{return m_iNumOutPuts;}
 
-	double  AmountToSpawn()const{return m_dAmountToSpawn;}
-	void    SetAmountToSpawn(double num){m_dAmountToSpawn = num;}
+	float  AmountToSpawn()const{return m_dAmountToSpawn;}
+	void    SetAmountToSpawn(float num){m_dAmountToSpawn = num;}
   
-	void    SetFitness(const double num){m_dFitness = num;}
-	void    SetAdjFitness(const double num){m_dAdjustedFitness = num;}
-	double  Fitness()const{return m_dFitness;}
-	double  GetAdjFitness()const{return m_dAdjustedFitness;}
+	void    SetFitness(const float num){m_dFitness = num;}
+	void    SetAdjFitness(const float num){m_dAdjustedFitness = num;}
+	float  Fitness()const{return m_dFitness;}
+	float  GetAdjFitness()const{return m_dAdjustedFitness;}
 
 	int     GetSpecies()const{return m_iSpecies;}
 	void    SetSpecies(int spc){m_iSpecies = spc;}
 
 	CNeuralNet* Phenotype(){return m_pPhenotype;}
   
-	double  SplitY(const int val)const{return m_vecNeurons[val].dSplitY;}
+	float  SplitY(const int val)const{return m_vecNeurons[val].dSplitY;}
 
 	vector<SLinkGene>	  LinkGenes()const{return m_vecLinks;}
 	vector<SNeuronGene> NeuronGenes()const{return m_vecNeurons;}

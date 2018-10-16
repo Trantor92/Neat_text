@@ -1,4 +1,4 @@
-#include "C:\Users\Adele\Desktop\C++_Code\Neat_text\include\genotype.h"
+#include "genotype.h"
 
 
 //------------------------------------------------------------------------
@@ -8,10 +8,10 @@
 CGenome::CGenome():m_pPhenotype(NULL),
                    m_GenomeID(0),
                    m_dFitness(0),
-                   m_dAdjustedFitness(0),
+                   m_dAdjustedFitness(0.f),
                    m_iNumInputs(0),
                    m_iNumOutPuts(0),
-                   m_dAmountToSpawn(0)
+                   m_dAmountToSpawn(0.f)
 {}
 
 
@@ -21,36 +21,41 @@ CGenome::CGenome():m_pPhenotype(NULL),
 //------------------------------------------------------------------------
 CGenome::CGenome(int id, int inputs, int outputs) :m_pPhenotype(NULL),
 m_GenomeID(id),
-m_dFitness(0),
-m_dAdjustedFitness(0),
+m_dFitness(0.f),
+m_dAdjustedFitness(0.f),
 m_iNumInputs(inputs),
 m_iNumOutPuts(outputs),
-m_dAmountToSpawn(0),
+m_dAmountToSpawn(0.f),
 m_iSpecies(0)
 
 {
 	//crea i geni dei nodi di input
-	double InputRowSlice = 0.8 / (double)(inputs);//solo scopo grafico
+	float InputRowSlice = 0.8f / (float)(inputs);//solo scopo grafico
 
-	for (int i = 0; i<inputs; i++)
+	m_vecNeurons.resize(inputs + 1 + outputs);
+	int i;
+	for (i = 0; i<inputs; i++)
 	{
-		m_vecNeurons.push_back(SNeuronGene(input, i, 0, 0.1 + i * InputRowSlice));
+		m_vecNeurons[i] = (SNeuronGene(input, i, 0.f, 0.1f + i * InputRowSlice));
 	}
 
 	//crea il gene del nodo di bias
-	m_vecNeurons.push_back(SNeuronGene(bias, inputs, 0, 0.9));
+	m_vecNeurons[i] = (SNeuronGene(bias, inputs, 0.f, 0.9f));
 
 
 	//crea i geni dei nodi di output
-	double OutputRowSlice = 1 / (double)(outputs + 1);//solo scopo grafico
+	float OutputRowSlice = 1 / (float)(outputs + 1);//solo scopo grafico
 
-	for (int i = 0; i<outputs; i++)
+	for (int j = 0; j<outputs; j++)
 	{
-		m_vecNeurons.push_back(SNeuronGene(output, i + inputs + 1, 1, (i + 1)*OutputRowSlice));
+		m_vecNeurons[i+1+j] = (SNeuronGene(output, j + inputs + 1, 1.f, (j + 1)*OutputRowSlice));
 	}
 
 	//crea un gene di linkche connette ogni nodo di input ad ogni nodo di output 
 	//assegna un peso casuale in -1 < w < 1, con distribuzione di probabilità lineare a tenda centrata in 0
+
+	//m_vecLinks.resize((inputs + 1)*outputs);
+
 	for (int i = 0; i<inputs + 1; i++)
 	{
 		for (int j = 0; j<outputs; j++)
@@ -77,9 +82,9 @@ CGenome::CGenome(int                 id,
                                                   m_pPhenotype(NULL),
                                                   m_vecLinks(genes),
                                                   m_vecNeurons(neurons),
-                                                  m_dAmountToSpawn(0),
-                                                  m_dFitness(0),
-                                                  m_dAdjustedFitness(0),
+                                                  m_dAmountToSpawn(0.f),
+                                                  m_dFitness(0.f),
+                                                  m_dAdjustedFitness(0.f),
                                                   m_iNumInputs(inputs),
                                                   m_iNumOutPuts(outputs)
                                            
@@ -106,7 +111,7 @@ CGenome::CGenome(const CGenome& g)
     m_GenomeID   = g.m_GenomeID;
     m_vecNeurons   = g.m_vecNeurons;
     m_vecLinks   = g.m_vecLinks;
-    m_pPhenotype = NULL;			//no need to perform a deep copy
+    m_pPhenotype = NULL;						//no need to perform a deep copy
     m_dFitness   = g.m_dFitness;
     m_dAdjustedFitness = g.m_dAdjustedFitness;
     m_iNumInputs  = g.m_iNumInputs;
@@ -126,7 +131,7 @@ CGenome& CGenome::operator =(const CGenome& g)
       m_GenomeID         = g.m_GenomeID;
       m_vecNeurons         = g.m_vecNeurons;
       m_vecLinks         = g.m_vecLinks;
-      m_pPhenotype       = NULL;//prima questo era tolto così spero di sveltire il codice in sort and record
+      m_pPhenotype       = NULL;				//no need to perform a deep copy
       m_dFitness         = g.m_dFitness;
       m_dAdjustedFitness = g.m_dAdjustedFitness;
       m_iNumInputs        = g.m_iNumInputs;
@@ -134,8 +139,6 @@ CGenome& CGenome::operator =(const CGenome& g)
       m_dAmountToSpawn   = g.m_dAmountToSpawn;
 	  m_iNetDepth = g.m_iNetDepth;
     }
-
-	  //memcpy(m_pPhenotype, g.m_pPhenotype, sizeof(CNeuralNet));
 
     return *this;
 }
@@ -164,19 +167,23 @@ CNeuralNet* CGenome::CreatePhenotype()
   DeletePhenotype();
 	
   //contenitore dei nodi del fenotipo (da notare che questa è la classe SNeuron e non SNeuronGene)
-  vector<SNeuron*>  vecNeurons;
+  vector<SNeuron*>  vecNeurons; vecNeurons.resize(m_vecNeurons.size());
 
   //si creano i nodi del fenotipo
+
+  SNeuron* pNeuron = nullptr;
   for (size_t i=0; i<m_vecNeurons.size(); i++)
   {
-    SNeuron* pNeuron = new SNeuron(m_vecNeurons[i].NeuronType,
+    pNeuron = new SNeuron(m_vecNeurons[i].NeuronType,
                                    m_vecNeurons[i].iID,
                                    m_vecNeurons[i].dSplitY,
                                    m_vecNeurons[i].dSplitX,
                                    m_vecNeurons[i].dActivationResponse);
     
-    vecNeurons.push_back(pNeuron);
+    vecNeurons[i] = pNeuron;
   }
+
+  //pNeuron = nullptr; delete pNeuron;
 	
   //ora si creano i link. è necessario questa informazione nella classe SNeuron
   for (size_t cGene=0; cGene<m_vecLinks.size(); ++cGene)
@@ -195,28 +202,30 @@ CNeuralNet* CGenome::CreatePhenotype()
       SLink tmpLink(m_vecLinks[cGene].dWeight,
                     FromNeuron,
                     ToNeuron,
-					false);
+					m_vecLinks[cGene].bRecurrent);
 			
       //aggiungo il link ai nodi da cui esce ed in cui entra, modificandone rispettivamente il vettore del link
 	  //in uscita e quello dei link in ingresso.
-      FromNeuron->vecLinksOut.push_back(tmpLink); //far questo modifica l'elemento di vecNeurons poichè è un puntatore 
-      ToNeuron->vecLinksIn.push_back(tmpLink);
+      FromNeuron->vecLinksOut.resize(FromNeuron->vecLinksOut.size()+1, tmpLink); //far questo modifica l'elemento di vecNeurons poichè è un puntatore 
+      ToNeuron->vecLinksIn.resize(ToNeuron->vecLinksIn.size()+1, tmpLink);
     }
   }
 
 
-  //calcolo e assegnazione della profondità del fenotipo
+ //calcolo e assegnazione della profondità del fenotipo
   //SetDepth(CalculateDepthPhenotype(vecNeurons));
-  SetDepth(1);//lo faccio a caso per evitare il calcolo della profondità che prende 13 s per fenotipo
+  
+  SetDepth(1);
 
   //Ora i nodi contengono tutte le informazioni sulle connessioni e una rete neurale (fenotipo)
   //può esseren creata a partire da essi.
   m_pPhenotype = new CNeuralNet(vecNeurons, m_iNetDepth);
-	
+
+
   return m_pPhenotype;
 }
 
-CNeuralNet* CGenome::CreatePhenotype(int ID1, int ID2)
+/*CNeuralNet* CGenome::CreatePhenotype(int ID1, int ID2)
 {//	funzione solo di controllo nell'ambito della mutazione strutturale dell'aggiunta di un link
  //	viene creato un fenotipo temporaneo solo per calcolarne la profondità, se è -1 significa che il nuovo link 
  //	rende la rete aciclica
@@ -229,9 +238,10 @@ CNeuralNet* CGenome::CreatePhenotype(int ID1, int ID2)
 	vector<SNeuron*>  vecNeurons;
 
 	//si creano i nodi del fenotipo
+	SNeuron* pNeuron = nullptr;
 	for (size_t i = 0; i<m_vecNeurons.size(); i++)
 	{
-		SNeuron* pNeuron = new SNeuron(m_vecNeurons[i].NeuronType,
+		    pNeuron = new SNeuron(m_vecNeurons[i].NeuronType,
 			m_vecNeurons[i].iID,
 			m_vecNeurons[i].dSplitY,
 			m_vecNeurons[i].dSplitX,
@@ -239,6 +249,8 @@ CNeuralNet* CGenome::CreatePhenotype(int ID1, int ID2)
 
 		vecNeurons.push_back(pNeuron);
 	}
+
+	pNeuron = nullptr; delete pNeuron;
 
 	//ora si creano i link. è necessario questa informazione nella classe SNeuron
 	for (size_t cGene = 0; cGene<m_vecLinks.size(); ++cGene)
@@ -273,7 +285,7 @@ CNeuralNet* CGenome::CreatePhenotype(int ID1, int ID2)
 	SNeuron* ToNeuron = vecNeurons[GetElementPos(ID2)];
 
 	//crazione del nuovo link
-	SLink tmpLink(1.,
+	SLink tmpLink(1.f,
 		FromNeuron,
 		ToNeuron,
 		false);
@@ -292,7 +304,7 @@ CNeuralNet* CGenome::CreatePhenotype(int ID1, int ID2)
 
 	return m_pPhenotype;
 }
-
+*/
 
 //-------------------------------CalculateDepthPhenotype--------------------------
 //
@@ -436,9 +448,11 @@ bool CGenome::DuplicateLink(int NeuronIn, int NeuronOut)
 //
 //  crea un nuovo link con probabilità CParams::dChanceAddLink
 //------------------------------------------------------------------------
-void CGenome::AddLink(double       MutationRate,
+void CGenome::AddLink(float       MutationRate,
                       CInnovation  &innovation,
-                      int          NumTrysToAddLink)
+                      int          NumTrysToAddLink,
+					  float			ChanceOfLooped,
+				      int NumTrysToFindLoop)
 {
   //semplicemente esce senza far nulla, con probabilità 1-MutationRate
   if (RandFloat() > MutationRate) return;
@@ -448,59 +462,91 @@ void CGenome::AddLink(double       MutationRate,
   int ID_neuron1 = -1;
   int ID_neuron2 = -1;
 
- 
-  //si cerca una coppia di nodi validi. si fanno NumTrysToAddLink tentativi
-  while (NumTrysToAddLink--)
+  //flag che indica se il link punta su un layer inferiore (scopo grafico)
+  bool bRecurrent = false;
+
+  //first test to see if an attempt shpould be made to create a 
+  //link that loops back into the same neuron
+  if (RandFloat() < ChanceOfLooped)
   {
-	  //si scelgono due nodi, il secondo non deve essere di input o bias
-	  ID_neuron1 = m_vecNeurons[RandInt(0, m_vecNeurons.size() - 1)].iID;
-
-	  ID_neuron2 =
-		  m_vecNeurons[RandInt(m_iNumInputs + 1, m_vecNeurons.size() - 1)].iID;//scegliendolo così sono sicuro
-																			   //che non sia un input o bias
-	  int NeuronPos1 = GetElementPos(ID_neuron1);
-	  int NeuronPos2 = GetElementPos(ID_neuron2);
-
-
-
-	  //controllo che i due nodi non siano in realtà lo stesso nodo o che non siano già connessi
-	  if (DuplicateLink(ID_neuron1, ID_neuron2) ||
-		  (ID_neuron1 == ID_neuron2))
+	  //YES: try NumTrysToFindLoop times to find a neuron that is not an
+	  //input or bias neuron and that does not already have a loopback
+	  //connection
+	  while (NumTrysToFindLoop--)
 	  {
+		  //grab a random neuron
+		  int NeuronPos = RandInt(m_iNumInputs + 1, m_vecNeurons.size() - 1);
 
-		  ID_neuron1 = -1;
-		  ID_neuron2 = -1;
-	  }
-	  else//la coppia è valida
-	  {
-		  /* non serve più perchè si ammettono reti ricorrenti
-		  //controllo che la rete non diventi ciclica con l'aggiunta di questo link
-		  CreatePhenotype(ID_neuron1, ID_neuron2);
-
-		  if (m_iNetDepth == -1)//messaggio di errore significa che la rete è ciclica
+		  //check to make sure the neuron does not already have a loopback 
+		  //link and that it is not an input or bias neuron
+		  if (!m_vecNeurons[NeuronPos].bRecurrent &&
+			  (m_vecNeurons[NeuronPos].NeuronType != bias) &&
+			  (m_vecNeurons[NeuronPos].NeuronType != input))
 		  {
+			  ID_neuron1 = ID_neuron2 = m_vecNeurons[NeuronPos].iID;
+
+			  m_vecNeurons[NeuronPos].bRecurrent = true;
+
+			  bRecurrent = true;
+
+			  NumTrysToFindLoop = 0;
+		  }
+	  }
+  }
+  else {
+	  //si cerca una coppia di nodi validi. si fanno NumTrysToAddLink tentativi
+	  while (NumTrysToAddLink--)
+	  {
+		  //si scelgono due nodi, il secondo non deve essere di input o bias
+		  ID_neuron1 = m_vecNeurons[RandInt(0, m_vecNeurons.size() - 1)].iID;
+
+		  ID_neuron2 =
+			  m_vecNeurons[RandInt(m_iNumInputs + 1, m_vecNeurons.size() - 1)].iID;//scegliendolo così sono sicuro
+																				   //che non sia un input o bias
+		  int NeuronPos1 = GetElementPos(ID_neuron1);
+		  int NeuronPos2 = GetElementPos(ID_neuron2);
+
+
+
+		  //controllo che i due nodi non siano in realtà lo stesso nodo o che non siano già connessi
+		  if (DuplicateLink(ID_neuron1, ID_neuron2) ||
+			  (ID_neuron1 == ID_neuron2))
+		  {
+
 			  ID_neuron1 = -1;
 			  ID_neuron2 = -1;
 		  }
-		  else//la coppia è valida e non cerco più
+		  else//la coppia è valida
+		  {
+			  //controllo che la rete non diventi ciclica con l'aggiunta di questo link
+			  /*CreatePhenotype(ID_neuron1, ID_neuron2);
+
+			  if (m_iNetDepth == -1)//messaggio di errore significa che la rete è ciclica
+			  {
+			  ID_neuron1 = -1;
+			  ID_neuron2 = -1;
+			  }
+			  else//la coppia è valida e non cerco più
+			  NumTrysToAddLink = 0;*/
+
+
 			  NumTrysToAddLink = 0;
-			  */
-		  NumTrysToAddLink = 0;
+		  }
 	  }
+
   }
 
+  
   //termina la funzione se non si è trovata un coppia valida nel numero di tentativi prefissato
   if ( (ID_neuron1 < 0) || (ID_neuron2 < 0) )
   {
     return;
   }
   
- 
-  //flag che indica se il link punta su un layer inferiore (scopo grafico)
-  bool bRecurrent = false;
 
-  if (m_vecNeurons[GetElementPos(ID_neuron1)].dSplitY >
-	  m_vecNeurons[GetElementPos(ID_neuron2)].dSplitY)
+
+  if ((ID_neuron1 == ID_neuron2) || (m_vecNeurons[GetElementPos(ID_neuron1)].dSplitY >
+	  m_vecNeurons[GetElementPos(ID_neuron2)].dSplitY))
   {
 	  bRecurrent = true;
   }
@@ -525,7 +571,7 @@ void CGenome::AddLink(double       MutationRate,
                           RandomClamped(),
                           bRecurrent);
 		
-    m_vecLinks.push_back(NewGene);
+    m_vecLinks.resize(m_vecLinks.size()+1, NewGene);
   }
   else
   {
@@ -537,7 +583,7 @@ void CGenome::AddLink(double       MutationRate,
                           RandomClamped(),
                           bRecurrent);
 	
-    m_vecLinks.push_back(NewGene);
+	m_vecLinks.resize(m_vecLinks.size() + 1, NewGene);
   }
 
   return;
@@ -549,7 +595,7 @@ void CGenome::AddLink(double       MutationRate,
 //	crea un nuovo nodo al genoma esaminando il fenotipo. si splitta un link
 //  esistente e vi si inserisce un nuovo nodo.
 //------------------------------------------------------------------------
-void CGenome::AddNeuron(double       MutationRate,
+void CGenome::AddNeuron(float       MutationRate,
                         CInnovation  &innovations)
 {
   //semplicemente esce senza far nulla, con probabilità 1-MutationRate
@@ -582,18 +628,18 @@ void CGenome::AddNeuron(double       MutationRate,
 
   //si tiene traccia del peso sinaptico originale in moda tale da riutilizzarlo per uno dei
   //due nuovi link, al fine di disturbare il meno possibile l'ottimizzazione fin qui raggiunta
-  double OriginalWeight = m_vecLinks[ChosenLink].dWeight;
+  float OriginalWeight = m_vecLinks[ChosenLink].dWeight;
 
   //si identificano i nodi che sono connessi tramite il link scelto
   int from =  m_vecLinks[ChosenLink].FromNeuron;
   int to   =  m_vecLinks[ChosenLink].ToNeuron;
 
   //si calcola la posizione grafica del nuovo nodo
-  double NewDepth = (m_vecNeurons[GetElementPos(from)].dSplitY + 
-                     m_vecNeurons[GetElementPos(to)].dSplitY) /2;
+  float NewDepth = (m_vecNeurons[GetElementPos(from)].dSplitY + 
+                     m_vecNeurons[GetElementPos(to)].dSplitY) /2.f;
 
-  double NewWidth = (m_vecNeurons[GetElementPos(from)].dSplitX + 
-                     m_vecNeurons[GetElementPos(to)].dSplitX) /2;
+  float NewWidth = (m_vecNeurons[GetElementPos(from)].dSplitX + 
+                     m_vecNeurons[GetElementPos(to)].dSplitX) /2.f;
 
  
 
@@ -641,7 +687,7 @@ void CGenome::AddNeuron(double       MutationRate,
                                                       NewDepth);
     
     //crea il gene per il nuovo nodo e lo aggiunge al genoma dei nodi.
-    m_vecNeurons.push_back(SNeuronGene(hidden,
+    m_vecNeurons.resize(m_vecNeurons.size()+1,SNeuronGene(hidden,
                                        NewNeuronID,
                                        NewDepth,
                                        NewWidth));
@@ -666,9 +712,9 @@ void CGenome::AddNeuron(double       MutationRate,
                         NewNeuronID,
                         true,
                         idLink1,
-                        1.0);
+                        1.f);
 
-    m_vecLinks.push_back(link1);
+    m_vecLinks.resize(m_vecLinks.size()+1, link1);
 
 
     //-----------------------------------second link
@@ -688,7 +734,7 @@ void CGenome::AddNeuron(double       MutationRate,
                         idLink2,
                         OriginalWeight);
     
-    m_vecLinks.push_back(link2);
+	m_vecLinks.resize(m_vecLinks.size() + 1, link2);
   }
 
   else//non si deve creare una nuova innovazione
@@ -711,17 +757,17 @@ void CGenome::AddNeuron(double       MutationRate,
     }
 
     //si creano i geni dei nuovi link e si aggiungono al genoma dei link
-    SLinkGene link1(from, NewNeuronID, true, idLink1, 1.0);
+    SLinkGene link1(from, NewNeuronID, true, idLink1, 1.f);
     SLinkGene link2(NewNeuronID, to, true, idLink2, OriginalWeight);
 
-    m_vecLinks.push_back(link1);
-    m_vecLinks.push_back(link2);
+	m_vecLinks.resize(m_vecLinks.size() + 1, link1); 
+	m_vecLinks.resize(m_vecLinks.size() + 1, link2); 
 
 
     //crea il gene del nuovo nodo e lo aggiunge al genoma dei nodi
     SNeuronGene NewNeuron(hidden, NewNeuronID, NewDepth, NewWidth);
 
-    m_vecNeurons.push_back(NewNeuron);		
+	m_vecNeurons.resize(m_vecNeurons.size() + 1, NewNeuron);
   }
 
   return;
@@ -756,9 +802,9 @@ bool CGenome::AlreadyHaveThisNeuronID(const int ID)
 //	con probabilità 1-prob_new_mut si perturba il peso.
 //  dMaxPertubation è la massima perturbazione applicata.
 //------------------------------------------------------------------------
-void CGenome::MutateWeights(double mut_rate,
-                            double prob_new_mut,
-                            double MaxPertubation)
+void CGenome::MutateWeights(float mut_rate,
+                            float prob_new_mut,
+                            float MaxPertubation)
 {
 	for (size_t cGen=0; cGen<m_vecLinks.size(); ++cGen)
 	{
@@ -786,8 +832,8 @@ void CGenome::MutateWeights(double mut_rate,
 //-------------------- MutateActivationResponse---------------------------
 //	itera sui geni dei nodi e ne perturba il parametro beta con probabilità mut_rate.
 //------------------------------------------------------------------------
-void CGenome::MutateActivationResponse(double mut_rate,
-                                       double MaxPertubation)
+void CGenome::MutateActivationResponse(float mut_rate,
+                                       float MaxPertubation)
 {
   for (size_t cGen=0; cGen<m_vecNeurons.size(); ++cGen)
   {
@@ -805,15 +851,15 @@ void CGenome::MutateActivationResponse(double mut_rate,
 //  questa funzione ritorna la distanza, in termini di compatibilità,
 //  fra il genoma a cui viene applicato e quello in argomentoi
 //------------------------------------------------------------------------
-double CGenome::GetCompatibilityScore(const CGenome &genome)
+float CGenome::GetCompatibilityScore(const CGenome &genome)
 {
   //scorre il genoma dei link contanto i geni disjoint, excess e matching
-  double	NumDisjoint = 0;
-  double	NumExcess   = 0; 
-  double	NumMatched  = 0;
+  int	NumDisjoint = 0;
+  int	NumExcess   = 0; 
+  int	NumMatched  = 0;
 
   //tiene traccia della somma, dei moduli delle differenze, fra i pesi dei geni matching
-  double	WeightDifference = 0;
+  float	WeightDifference = 0.f;
 
   //tengono traccia della posizione in lettura per ognuno dei due genomi.
   int g1 = 0;
@@ -884,13 +930,13 @@ double CGenome::GetCompatibilityScore(const CGenome &genome)
   }
 
   //pesi nel calcolo della somma che definisce la funzione di compatibilità.
-  const double mDisjoint = 1;
-  const double mExcess   = 1;
-  const double mMatched  = 0.4;
+  const float mDisjoint = 1.f;
+  const float mExcess   = 1.f;
+  const float mMatched  = 0.4f;
 	
   //funzione di compatibilità
-  double score = (mExcess * NumExcess/(double)longest) + 
-                 (mDisjoint * NumDisjoint/(double)longest) + 
+  float score = (mExcess * NumExcess/(float)longest) + 
+                 (mDisjoint * NumDisjoint/(float)longest) + 
                  (mMatched * WeightDifference / NumMatched);
 
     
@@ -941,10 +987,12 @@ bool CGenome::CreateFromFile(const char* szFileName)
 
   in >> buffer; in >> NumNeurons;
 
+  m_vecNeurons.resize(NumNeurons);
+
   for (int n=0; n<NumNeurons; ++n)
   {
     int    NeuronID, NeuronType;
-    double Activation, SplitX, SplitY;
+    float Activation, SplitX, SplitY;
 
     in >> buffer; in >> NeuronID;
     in >> buffer; in >> NeuronType;
@@ -959,7 +1007,7 @@ bool CGenome::CreateFromFile(const char* szFileName)
                      SplitX,
                      Activation);
 
-    m_vecNeurons.push_back(gene);
+    m_vecNeurons[n] = (gene);
     
   }//legge il nuovo nodo
 
@@ -970,11 +1018,13 @@ bool CGenome::CreateFromFile(const char* szFileName)
 
   int NextInnovationID = NumNeurons;
 
+  m_vecLinks.resize(NumLinks);
+
   for (int l=0; l<NumLinks; ++l)
   {
     int    from, to, ID;
     bool   recurrent, enabled;
-    double weight;
+    float weight;
 
     in >> buffer; in >> ID;
     in >> buffer; in >> from;
@@ -992,7 +1042,7 @@ bool CGenome::CreateFromFile(const char* szFileName)
                        recurrent);
 
 
-    m_vecLinks.push_back(LinkGene);
+    m_vecLinks[l] = (LinkGene);
 
 
   }//next link

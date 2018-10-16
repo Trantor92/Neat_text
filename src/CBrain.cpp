@@ -1,50 +1,185 @@
-#include "C:\Users\Adele\Desktop\C++_Code\Neat_text\include\CBrain.h"
+#include "CBrain.h"
 
 
 //-----constructor-------
 CBrain::CBrain()
 {
-	m_dFitness = 0; 
-	m_dFitness_test = 0;
+	m_dFitness = 0.f; 
+	m_dFitness_test = 0.f;
+
+	mean_sqe.resize(CParams::iNumOutputs);
 }
 
+CBrain::~CBrain()
+{
+	;
+}
 
 //-------------------------------Update()--------------------------------
 //
 //outputs deve avere size nulla poichè si utilizza il push_back, ciò viene fatto in Reset.
 //carica in outputs i valori di attivazione dei nodi output, per ogni evento caricato in Input
 //-----------------------------------------------------------------------
+/*bool CBrain::Update(vector<vector<float>> Inputs)
+{
+
+	if (GetPhenotype()->GetDepth() != -1)//profondità -1 è il valore di errore per dire che la rete è aciclica
+	{
+		for (int i_example = 0; i_example < Inputs.size(); i_example++)
+		{
+			outputs.push_back(m_pItsBrain->Update(Inputs[i_example], CNeuralNet::snapshot));
+		}
+	}
+	else
+	{//qualcosa è andato storto ed è arrivata fino a qui una rete aciclica
+		MessageBox(NULL, L"Error in Update a Brain, la rete è ciclica", L"ERROR", MB_OK);
+	}
+
+	return true;
+}*/
+
+
 bool CBrain::Update(vector<char> Inputs)
 {
-	m_dFitness = 0;//importante per il calcolo della fitness
+	//dFitness = 0.f;//importante per il calcolo della fitness
 
 
-	vector<float> input; input.resize(CParams::iNumInputs);
+	vector<float> input; input.resize(CParams::iNumInputs,0.f);
 
-	int pos = Inputs[0] + 128; //posizione del bit hot nella codifica del carattere
-	input[pos] = 1; //input codificato 
+	//ENCODING DEL CHAR
+	int pos_hot = Encoding_Char(Inputs[0]);
 
-	output_char.push_back(Inputs[0]);
+	input[pos_hot] = 1; //input codificato 
+
+
+	output_char.resize(Inputs.size());
+	output_char[0] = (Inputs[0]);
+
+
+	outputs.resize(Inputs.size() - 1);
+
+	float error, w_postc;
+	bool is_wrong = false;
 
 	for (int c = 1; c < Inputs.size(); c++)//per tutti caratteri nel testo di training
 	{
 		//ho il vector di input codificato one-hot
-		outputs.push_back(m_pItsBrain->Update(input, CNeuralNet::active));
+		outputs[c-1] = (m_pItsBrain->Update(input, CNeuralNet::active));
 
-		input[pos] = 0;
+		//int pos_out = Softmax(outputs[c - 1]);//esegue la softmax sull'ouputs e restituisce la pos del max, magari definirla in utils.h
+
+		/*if (Inputs[c] + 128 == pos_out)
+			m_dFitness++;*/
+
+		/*if (!is_wrong)
+		{
+			error = Calcola_Scarto(Encoding_Char(Inputs[c]), outputs[c - 1]);
+
+			//m_dFitness += (1 - error);//modalità 1 che fa la cosa per tutti
+
+			m_dFitness += 1.f;//modalità di ottimizzazione solo dell'ultimo char
+
+			w_postc = 0.05f / (c - Inputs.size() + 1);
+		}*/
+
+		input[pos_hot] = 0.f;
+
+		//pos_hot = Softmax(outputs[c - 1]);
+
+
+		/*
+
+		if ((!is_wrong) && (pos_hot != Encoding_Char(Inputs[c])))
+		{
+			is_wrong = true;
+
+			m_dFitness -= error;//modalità di ottimizzazione solo dell'ultimo char
+		}
 		
-		int pos_out = Softmax(outputs[c-1]);//esegue la softmax sull'ouputs e restituisce la pos del max, magari definirla in utils.h
+		if ((is_wrong) && (pos_hot == Encoding_Char(Inputs[c])))//modalità globale
+		{
+			m_dFitness += w_postc;
+		}
+		*/
+		
+		pos_hot = std::distance(outputs[c - 1].begin(), max_element(outputs[c - 1].begin(), outputs[c - 1].end()));
+		input[pos_hot] = 1.f;//metto in input nel prossimo turno la previsione del turno corrente
+		output_char[c] = Decoding_Char(pos_hot);
 
-		if (Inputs[c] + 128 == pos_out)
-			m_dFitness++;
 
-		pos = Inputs[c] + 128;
-		input[pos] = 1;//metto in input nel prossimo turno la previsione del turno corrente
 
-		output_char.push_back((char)(pos_out - 128));
+		//solo con versione globale
+		input[pos_hot] = 0.f;
+		pos_hot = Encoding_Char(Inputs[c]);
+		input[pos_hot] = 1.f;
+
+		
 	}
-	
+
 	return true;
+}
+
+bool CBrain::Update_test()
+{
+
+	vector<float> input; input.resize(CParams::iNumInputs, 0.f);
+
+	//ENCODING DEL CHAR inizializzante
+	int pos_hot = Encoding_Char('\n');
+
+	input[pos_hot] = 1; //input codificato 
+
+
+	int size_prev = CParams::TrainingInputs.size();
+	
+	output_char.resize(size_prev);
+	//output_char[0] = (Inputs[0]);
+
+	outputs.resize(size_prev);
+
+	for (int c = 0; c < size_prev; c++)//per tutti caratteri nel testo di training
+	{
+		//ho il vector di input codificato one-hot
+		outputs[c] = (m_pItsBrain->Update(input, CNeuralNet::active));
+
+		//int pos_out = Softmax(outputs[c - 1]);//esegue la softmax sull'ouputs e restituisce la pos del max, magari definirla in utils.h
+
+		/*if (Inputs[c] + 128 == pos_out)
+		m_dFitness++;*/
+
+		/*if (!is_wrong)
+		{
+			error = Calcola_Scarto(Encoding_Char(Inputs[c]), outputs[c - 1]);
+
+			//m_dFitness += (1 - error);//modalità 1 che fa la cosa per tutti
+
+			m_dFitness += 1.f;//modalità di ottimizzazione solo dell'ultimo char
+		}*/
+
+		input[pos_hot] = 0.f;
+
+		pos_hot = Softmax(outputs[c]);//volendo bisognerebbe generare il carattere in modo casuale con probabilita
+		                                  //data dal softmax
+
+		/*if ((!is_wrong) && (pos_hot != Encoding_Char(Inputs[c])))
+		{
+			is_wrong = true;
+
+			m_dFitness -= error;//modalità di ottimizzazione solo dell'ultimo char
+		}*/
+
+
+
+		//pos_hot = *max_element(outputs[c - 1].begin(), outputs[c - 1].end());//vedere se funziona
+		input = outputs[c];//metto in input nel prossimo turno la previsione del turno corrente
+
+		output_char[c] = Decoding_Char(pos_hot);
+	}
+
+	return true;
+
+
+
 }
 
 
@@ -53,96 +188,53 @@ bool CBrain::Update(vector<char> Inputs)
 //Calcola la Fitness e la carica nella variabile private
 //restituisce Rate% poichè serve esternamente alla classe
 //------------------------------------------------------------------------
-double CBrain::EndOfRunCalculations(vector<vector<double>> TrueOutputs, bool is_test)
+float CBrain::EndOfRunCalculations(vector<char> Inputs, bool is_test)
 {
-	double sum, sum_perc;
-	vector<double> vec_sum;
+	m_dFitness = 0.f;//importante per il calcolo della fitness
 
-	int i_max, i_min;
 
-	double max, min;
-	
-	sum = sum_perc = 0; vec_sum.resize(TrueOutputs[0].size(),0);
+	float error, w_postc;
+	bool is_wrong = false;
 
-	for (int i_row = 0; i_row < TrueOutputs.size(); i_row++)
+	for (int c = 1; c < Inputs.size(); c++)//per tutti caratteri nel testo di training
 	{
-		//calcolo della componente in sigma
-		for (int i_col = 0; i_col < TrueOutputs[i_row].size(); i_col++)
+		error = Calcola_Scarto(Encoding_Char(Inputs[c]), outputs[c - 1]);
+
+		//entra qui per i caratteri predetti di fila
+		if (!is_wrong)
 		{
-			vec_sum[i_col] += pow(outputs[i_row][i_col] - TrueOutputs[i_row][i_col], 2.);
+			m_dFitness += 1.f;//modalità di ottimizzazione solo dell'ultimo char
+
+			w_postc = 0.05f / (c - Inputs.size() + 1);
 		}
 
-		//calcolo della componente in Rate%
-		max = -1; min = 2;
-		for (int i_col = 0; i_col < TrueOutputs[i_row].size(); i_col++)
+
+		if ((!is_wrong) && (output_char[c] != Inputs[c]))
 		{
-			if (max < outputs[i_row][i_col])
-			{
-				max = outputs[i_row][i_col];
+			is_wrong = true;
 
-				i_max = i_col;
-			}
-
-			if (min > outputs[i_row][i_col])
-			{
-				min = outputs[i_row][i_col];
-
-				i_min = i_col;
-			}
-
+			m_dFitness -= error;//modalità di ottimizzazione solo dell'ultimo char
 		}
 		
-
-		//numero di eventi tale che l'attivazione di output massima coincide con l'evento che si è verificato
-		if (TrueOutputs[i_row][i_max])
-			sum_perc++;
+		if ((is_wrong) && (output_char[c] == Inputs[c]))//modalità globale
+		{
+			m_dFitness += w_postc;
+		}
+		
 	}
 
-	//calcolo della sigma2 media
-	for (int i = 0; i < vec_sum.size(); i++)
-	{
-		vec_sum[i] /= TrueOutputs.size();
-
-		sum += vec_sum[i];
-
-		mean_sqe.push_back(vec_sum[i]);
-	}
-
-	sum /= CParams::iNumOutputs;
-
-
-	//Rate%
-	sum_perc /= TrueOutputs.size();
-
-	//Fitness
-	double result = 100 * ((1. / 2)*sum_perc + (1. / 2)*(1 - sum));
-	
-
-	
-	if(!is_test)//Training Set
-	{
-		 m_dFitness = result;
-	}
-	else        //Test Set
-	{
-		m_dFitness_test = result;
-	}
-	
-	return 100 * sum_perc;
+	return m_dFitness;
 }
 
 
 void CBrain::Reset()
 {
-	
 	for (int i = 0; i < outputs.size(); i++)
 		outputs[i].clear();
 
 	outputs.clear();
 
-	output_char.clear();
-
-	mean_sqe.clear();
+	//mean_sqe.clear();
 };
 
 
@@ -164,62 +256,39 @@ bool CBrain::Write_output(string name_file_output, bool is_train)
 
 	for (int row = 0; row < output_char.size(); row++)
 	{
-		if(is_train)//training set
-		{
-
-			out << output_char[row];
-
-
-			//out << CParams::squadre_train[row] << "\t";
-
-			/*for (int col = 0; col < CParams::TrainingInputs[row].size(); col++)//input
-			{
-				out << CParams::TrainingInputs[row][col] << "\t";
-			}
-
-			out << endl;
-
-			for (int col = 0; col < CParams::TrainingOutputs[row].size(); col++)//trueoutput
-			{
-				out << CParams::TrainingOutputs[row][col] << "\t";
-			}
-
-			out << endl;
-
-			for (int col = 0; col < outputs[row].size(); col++)//outputs
-			{
-				out << outputs[row][col] << "\t";
-			}
-
-			out << endl;*/
-		}
-		else//test set
-		{
-			out << CParams::squadre_test[row] << "\t";
-
-			for (int col = 0; col < CParams::TestInputs[row].size(); col++)
-			{
-				out << CParams::TestInputs[row][col] << "\t";
-			}
-
-			out << endl;
-
-			for (int col = 0; col < CParams::TestOutputs[row].size(); col++)
-			{
-				out << CParams::TestOutputs[row][col] << "\t";
-			}
-
-			out << endl;
-
-			for (int col = 0; col < outputs[row].size(); col++)
-			{
-				out << outputs[row][col] << "\t";
-			}
-
-			out << endl;
-		}
-		
+		(is_train) ? (out << output_char[row]) : (out << output_char[row]);
 	}
 
 	return true;
+}
+
+int CBrain::Encoding_Char(char c)
+{
+	/*piccola, 32 caratteri*/
+	return (c >= 'a') ? (c + 6 - 'a') :
+		((c == '\n') ? 0 : ((c == ' ') ? 1 :
+		((c == '!') ? 2 : ((c == ',') ? 3 :
+			((c == '.') ? 4 : /*'?'*/ 5)))));
+
+	/*media, solo caratteri stampabili più '\n', 97 caratteri*/
+	//return (c == '\n') ? 0 : c - 31;
+
+	/*completa, 256 caratteri*/
+	//return (int)c + 128;
+}
+
+char CBrain::Decoding_Char(int pos) 
+{
+	/*piccola*/
+	return (pos >= 6) ? (pos - 6 + 'a') :
+		((pos == 0) ? '\n' : ((pos == 1) ? ' ' :
+		((pos == 2) ? '!' : ((pos == 3) ? ',' :
+			((pos == 4) ? '.' : /*5*/ '?')))));
+
+	/*media*/
+	//return (pos == 0) ? '\n' : pos + 31;
+
+
+	/*completa*/
+	//return (char)pos - 128;
 }

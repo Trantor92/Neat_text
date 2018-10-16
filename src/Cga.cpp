@@ -1,4 +1,4 @@
-#include "C:\Users\Adele\Desktop\C++_Code\Neat_text\include\Cga.h"
+#include "Cga.h"
 
 
 //---------------------------- constructor --------------------------------
@@ -13,14 +13,17 @@ Cga::Cga(int  size,
                     m_pInnovation(NULL),
                     m_iNextGenomeID(0),
                     m_iNextSpeciesID(0),
-                    m_dBestEverFitness(0),
-                    m_dTotFitAdj(0),
-                    m_dAvFitAdj(0)
+                    m_dBestEverFitness(0.f),
+                    m_dTotFitAdj(0.f),
+                    m_dAvFitAdj(0.f)
 {
+
+	m_vecGenomes.resize(m_iPopSize);
+
 	//crea la popolazione di genomi
 	for (int i=0; i<m_iPopSize; ++i)
 	{
-		m_vecGenomes.push_back(CGenome(m_iNextGenomeID++, inputs, outputs));
+		m_vecGenomes[i] = (CGenome(m_iNextGenomeID++, inputs, outputs));
 	}
 
 
@@ -52,14 +55,16 @@ Cga::~Cga()
 //-------------------------------------------------------------------------
 vector<CNeuralNet*> Cga::CreatePhenotypes()
 {
-	vector<CNeuralNet*> networks;
+	vector<CNeuralNet*> networks; networks.resize(m_iPopSize);
+
+#pragma omp parallel for 
 
 	for (int i=0; i<m_iPopSize; i++)
 	{
 		//crea il fenotipo
 		CNeuralNet* net = m_vecGenomes[i].CreatePhenotype();
 
-		networks.push_back(net);
+		networks[i] = net;
 	}
 
 	return networks;
@@ -74,7 +79,7 @@ vector<CNeuralNet*> Cga::CreatePhenotypes()
 //  della popolazione. viene fornita in argomento la fitness dei Brains associati
 //  ai genomi della popolazione
 //------------------------------------------------------------------------
-vector<CNeuralNet*> Cga::Epoch(const vector<double> &FitnessScores)
+vector<CNeuralNet*> Cga::Epoch(const vector<float> &FitnessScores)
 {
   //controllo che le dimensioni siano corrette
   if (FitnessScores.size() != m_vecGenomes.size())
@@ -106,7 +111,7 @@ vector<CNeuralNet*> Cga::Epoch(const vector<double> &FitnessScores)
 
 
   //resetta alcuni valori che permettono la speciazione e uccide le specie che non migliorano
-  vector<double> My_FitnessScores = ResetAndKill(FitnessScores);
+  vector<float> My_FitnessScores = ResetAndKill(FitnessScores);
 
 
   //ordina i genomi per fitness decrescente e ne registra i migliori in m_vecBestGenomes
@@ -144,7 +149,7 @@ vector<CNeuralNet*> Cga::Epoch(const vector<double> &FitnessScores)
 
 
   //conterrà la nuova popolazione di genomi
-  vector<CGenome> NewPop;
+  vector<CGenome> NewPop; NewPop.resize(CParams::iPopSize);
 
   //numero di genomi prodotti nella riproduzione fino ad ora,
   //serve per fermarsi una volta che si sono generati m_iPopSize individui. 
@@ -157,7 +162,7 @@ vector<CNeuralNet*> Cga::Epoch(const vector<double> &FitnessScores)
   //e mutare	
   for (int spc=0; spc<m_vecSpecies.size(); ++spc)
   {
-    //poichè il numero di figli concessi ad ogni specie è un double che viene arrotondato
+    //poichè il numero di figli concessi ad ogni specie è un float che viene arrotondato
 	//ad intero, è possibile sforare in eccesso o in difetto il vincolo di avere m_iPopSize 
 	//individui ad ogni generazione. bisogna pertanto controllare che ciò non accada
     if (NumSpawnedSoFar < CParams::iPopSize)
@@ -249,7 +254,9 @@ vector<CNeuralNet*> Cga::Epoch(const vector<double> &FitnessScores)
           //eventuale aggiunta di un link
           baby.AddLink(CParams::dChanceAddLink,
                        *m_pInnovation,
-                       CParams::iNumAddLinkAttempts);
+                       CParams::iNumAddLinkAttempts,
+						CParams::dChanceAddRecurrentLink,
+						CParams::iNumTrysToFindLoopedLink);
 
           //eventuale mutazione dei pesi
           baby.MutateWeights(CParams::dMutationRate,
@@ -266,7 +273,7 @@ vector<CNeuralNet*> Cga::Epoch(const vector<double> &FitnessScores)
         baby.SortGenes();
 
         //si aggiunge il nuovo individuo alla popolazione
-        NewPop.push_back(baby);
+        NewPop[NumSpawnedSoFar] = (baby);
 
         ++NumSpawnedSoFar;
 
@@ -292,9 +299,11 @@ vector<CNeuralNet*> Cga::Epoch(const vector<double> &FitnessScores)
     int Rqd = CParams::iPopSize - NumSpawnedSoFar;
 
     //si estraggono e si aggiungono alla nuova popolazione
-    while (Rqd--)
+    while (Rqd)
     {
-      NewPop.push_back(TournamentSelection(m_iPopSize/5));
+      NewPop[CParams::iPopSize - Rqd] = (TournamentSelection(m_iPopSize/5));
+
+	  --Rqd;
     }
   }
 
@@ -303,13 +312,15 @@ vector<CNeuralNet*> Cga::Epoch(const vector<double> &FitnessScores)
 
 
   //si creano i fenotipi dei genomi della nuova popolazione
-  vector<CNeuralNet*> new_phenotypes;
+  vector<CNeuralNet*> new_phenotypes; new_phenotypes.resize(m_vecGenomes.size());
+
+#pragma omp parallel for
 
   for (int gen=0; gen<m_vecGenomes.size(); ++gen)
   {    
     CNeuralNet* phenotype = m_vecGenomes[gen].CreatePhenotype();
 
-    new_phenotypes.push_back(phenotype);
+    new_phenotypes[gen] = phenotype;
   }
 
   //incremento del contatore delle generazione e si ritornano i nuovi fenotipi
@@ -327,7 +338,7 @@ vector<CNeuralNet*> Cga::Epoch(const vector<double> &FitnessScores)
 void Cga::SortAndRecord()
 {
   //si ordinano gli individui per fitness decrescente
-  //sort(m_vecGenomes.begin(), m_vecGenomes.end());//viene già fatto in speciate()
+  sort(m_vecGenomes.begin(), m_vecGenomes.end());
 
   //si controlla che se il milgior genoma abbia superato il record
   if (m_vecGenomes[0].Fitness() > m_dBestEverFitness)
@@ -347,11 +358,11 @@ void Cga::SortAndRecord()
 void Cga::StoreBestGenomes()
 {
   //si cancella il vecchio vector e si carica il nuovo
-  m_vecBestGenomes.clear();
+	m_vecBestGenomes.clear(); m_vecBestGenomes.resize(CParams::iNumBestBrains);
 
   for (int gen=0; gen<CParams::iNumBestBrains; ++gen)
   {
-    m_vecBestGenomes.push_back(m_vecGenomes[gen]);
+    m_vecBestGenomes[gen] = (m_vecGenomes[gen]);
   }
 }
 
@@ -362,13 +373,11 @@ void Cga::StoreBestGenomes()
 //------------------------------------------------------------------------
 vector<CNeuralNet*> Cga::GetBestPhenotypesFromLastGeneration()
 {
-  vector<CNeuralNet*> brains;
+	vector<CNeuralNet*> brains; brains.resize(m_vecBestGenomes.size());
 
   for (int gen=0; gen<m_vecBestGenomes.size(); ++gen)
   {
-    brains.push_back(m_vecBestGenomes[gen].CreatePhenotype());
-
-	  //brains.push_back(m_vecBestGenomes[gen].Phenotype());
+    brains[gen] = (m_vecBestGenomes[gen].CreatePhenotype());
   }
 
   return brains;
@@ -394,7 +403,7 @@ void Cga::AdjustSpeciesFitnesses()
 //
 //  Raggruppo i genomi in specie calcolando la compatibilità che questi hanno con
 //  i genomi Leader delle specie esistenti. La funzione qunidi calcola la fitness modificata
-//  di ogni individuo e ne determina il numero di figli concessi (double).
+//  di ogni individuo e ne determina il numero di figli concessi (float).
 //------------------------------------------------------------------------
 void Cga::SpeciateAndCalculateSpawnLevels()
 {
@@ -412,7 +421,7 @@ void Cga::SpeciateAndCalculateSpawnLevels()
 	//compatibile con nessuna specie, ne viene creata una con lui come leader
     for (int spc=0; spc<m_vecSpecies.size(); ++spc)
     {
-      double compatibility = m_vecGenomes[gen].GetCompatibilityScore(m_vecSpecies[spc].Leader());
+      float compatibility = m_vecGenomes[gen].GetCompatibilityScore(m_vecSpecies[spc].Leader());
 
       //se risulta compatibile con questa specie
       if (compatibility <= CParams::dCompatibilityThreshold)
@@ -432,7 +441,9 @@ void Cga::SpeciateAndCalculateSpawnLevels()
     if (!bAdded)//se non è compatibile a nessuna specie esistente
     {
       //ne creo una nuova
-      m_vecSpecies.push_back(CSpecies(m_vecGenomes[gen], m_iNextSpeciesID));
+
+		m_vecSpecies.resize(m_vecSpecies.size() + 1, CSpecies(m_vecGenomes[gen], m_iNextSpeciesID));
+      //m_vecSpecies.push_back(CSpecies(m_vecGenomes[gen], m_iNextSpeciesID));
 
 	  m_vecGenomes[gen].SetSpecies(m_iNextSpeciesID++);
 
@@ -459,7 +470,7 @@ void Cga::SpeciateAndCalculateSpawnLevels()
 	  {
 		  //visto che il leader può essere cambiato bisogna risettare lui
 		  //e le variabili ad esso connesse
-		  double FitnessOfBest = m_vecSpecies[spc].GenomesOfMembers()[0]->Fitness();
+		  float FitnessOfBest = m_vecSpecies[spc].GenomesOfMembers()[0]->Fitness();
 		  if (m_vecSpecies[spc].BestFitness() != FitnessOfBest)
 		  {
 			  m_vecSpecies[spc].SetLeader();
@@ -490,7 +501,7 @@ void Cga::SpeciateAndCalculateSpawnLevels()
   //si calcola quanti figli ogni genoma può avere
   for (int gen=0; gen<m_vecGenomes.size(); ++gen)
   {   
-     double ToSpawn = m_vecGenomes[gen].GetAdjFitness() / m_dAvFitAdj;
+     float ToSpawn = m_vecGenomes[gen].GetAdjFitness() / m_dAvFitAdj;
 
      m_vecGenomes[gen].SetAmountToSpawn(ToSpawn);
   }
@@ -526,6 +537,9 @@ void Cga::Speciate()
 	//il numero di specie presenti nel sistema
 	AdjustCompatibilityThreshold();
 
+	for (int i = 0; i < m_vecGenomes.size(); ++i)
+		m_vecGenomes[i].DeletePhenotype();//DestroyPhenotype();
+
 	sort(m_vecGenomes.begin(), m_vecGenomes.end());
 
 	//speciazione
@@ -533,7 +547,7 @@ void Cga::Speciate()
 	{
 		for (int spc = 0; spc<m_vecSpecies.size(); ++spc)
 		{
-			double compatibility = m_vecGenomes[gen].GetCompatibilityScore(m_vecSpecies[spc].Leader());
+			float compatibility = m_vecGenomes[gen].GetCompatibilityScore(m_vecSpecies[spc].Leader());
 
 			if (compatibility <= CParams::dCompatibilityThreshold)
 			{
@@ -555,7 +569,7 @@ void Cga::Speciate()
 	{
 		if (m_vecSpecies[spc].GenomesOfMembers().size() > 0)
 		{
-			double FitnessOfBest = m_vecSpecies[spc].GenomesOfMembers()[0]->Fitness();
+			float FitnessOfBest = m_vecSpecies[spc].GenomesOfMembers()[0]->Fitness();
 			if (m_vecSpecies[spc].BestFitness() != FitnessOfBest)
 			{
 				m_vecSpecies[spc].SetLeader();
@@ -579,7 +593,7 @@ void Cga::AdjustCompatibilityThreshold()
   //funzione.
   if (CParams::iMaxNumberOfSpecies < 1) return;
   
-  const double ThresholdIncrement = 0.01;
+  const float ThresholdIncrement = 0.01f;
 
   //troppe specie, alzo la soglia
   if (m_vecSpecies.size() > CParams::iMaxNumberOfSpecies)
@@ -588,7 +602,7 @@ void Cga::AdjustCompatibilityThreshold()
   }
 
   //poche specie, abbasso la soglia
-  else if (m_vecSpecies.size() < 1)
+  else if (m_vecSpecies.size() < 2)
   {
     CParams::dCompatibilityThreshold -= ThresholdIncrement;
   }
@@ -618,7 +632,7 @@ void Cga::AddNeuronID(const int nodeID, vector<int> &vec)
 		}
 	}
 
-	vec.push_back(nodeID);
+	vec.resize(vec.size() + 1, nodeID);
 
 	return;
 }
@@ -767,14 +781,14 @@ CGenome Cga::Crossover(CGenome& mum, CGenome& dad)
     //meccanismo di controllo: si impedisce di aggiungere lo stesso gene due volte di fila
     if (BabyGenes.size() == 0)
     {
-      BabyGenes.push_back(SelectedGene);
+      BabyGenes.resize(BabyGenes.size() + 1, SelectedGene);
     }
     else
     {
       if (BabyGenes[BabyGenes.size()-1].InnovationID !=
           SelectedGene.InnovationID)
       {
-        BabyGenes.push_back(SelectedGene);
+		  BabyGenes.resize(BabyGenes.size() + 1, SelectedGene);
       }
     }   
 
@@ -790,9 +804,11 @@ CGenome Cga::Crossover(CGenome& mum, CGenome& dad)
   sort(vecNeurons.begin(), vecNeurons.end());
   
   //e si aggiungono al genoma dei nodi del figlio
+  BabyNeurons.resize(vecNeurons.size());
   for (int i=0; i<vecNeurons.size(); i++)
   {
-    BabyNeurons.push_back(m_pInnovation->CreateNeuronFromID(vecNeurons[i]));
+      BabyNeurons[i] = (m_pInnovation->CreateNeuronFromID(vecNeurons[i]));
+	  //BabyNeurons.push_back(m_pInnovation->CreateNeuronFromID(vecNeurons[i]));
   }
 
   //in ultimo si crea il genoma completo del figlio
@@ -803,9 +819,9 @@ CGenome Cga::Crossover(CGenome& mum, CGenome& dad)
                      mum.NumOutputs());
 
 
-  /* non serve più perche si ammettono reti ricorrenti
+
   //si construsce e associa il fenotipo 
-  babyGenome.CreatePhenotype();
+  /*babyGenome.CreatePhenotype();
 
   //si controlla che il figlio non sia ciclico, altrimenti si restituisce di default
   //il genoma dellla madre
@@ -826,7 +842,7 @@ CGenome Cga::Crossover(CGenome& mum, CGenome& dad)
 CGenome Cga::TournamentSelection(const int NumComparisons)
 {
 	//conterrà la fitness migliore fra quelli estratti
-	double BestFitnessSoFar = 0;
+	float BestFitnessSoFar = 0.f;
 
 	//conterrà l'indice del genoma migliore
 	int ChosenOne = 0;
@@ -862,10 +878,10 @@ CGenome Cga::TournamentSelection(const int NumComparisons)
 //  popolazione.
 //  Restituisce un vector contenente la fitness dei genomi sopravvissuti.
 //--------------------------------------------------------------------
-vector<double> Cga::ResetAndKill(vector<double> FitnessScores)
+vector<float> Cga::ResetAndKill(vector<float> FitnessScores)
 {
-  m_dTotFitAdj = 0;
-  m_dAvFitAdj  = 0;
+  m_dTotFitAdj = 0.f;
+  m_dAvFitAdj  = 0.f;
 
   //iteratore sulle specie presenti nella popolazione
   vector<CSpecies>::iterator curSp = m_vecSpecies.begin();
@@ -874,30 +890,37 @@ vector<double> Cga::ResetAndKill(vector<double> FitnessScores)
   //--- salvataggio delle informazioni sui membri delle specie -------------
   
   //vector di vector dei membri di ogni specie
-  vector<vector<CGenome*>> genome_members;
-  
+  //vector<vector<CGenome*>> genome_members;
+  vector<CGenome*> genome_members;
+
   //ed i relativi numeri identificativi
   vector<int> ID_temp;
-  vector<vector<int>> ID_member;
+  vector<vector<int>> ID_member; ID_member.resize(m_vecSpecies.size());
 
   int i = 0;
   while (curSp != m_vecSpecies.end())
   {
 
-	genome_members.push_back(curSp->GenomesOfMembers());
+	//genome_members[i].push_back(curSp->GenomesOfMembers());
+	  genome_members = (curSp->GenomesOfMembers());
 
-	int genome_member_size = genome_members[i].size();
-
+	//int genome_member_size = genome_members[i].size();
+	  int genome_member_size = genome_members.size();
+	  ID_temp.resize(genome_member_size);
 	for (int j = 0; j < genome_member_size; j++)
 	{
-	  ID_temp.push_back(genome_members[i][j]->ID());
+	  //ID_temp.push_back(genome_members[i][j]->ID());
+		ID_temp[j] = (genome_members[j]->ID());
 	}
 
-	ID_member.push_back(ID_temp); ID_temp.clear();
+	//fose qui devo deallocare genome_members
+
+	ID_member[i] = (ID_temp); ID_temp.clear();
 
 	curSp++; i++;
   }
 
+  genome_members.clear();
 
   //--- si uccidono le specie che non migliorano e si -------------------------------
   //-------- disassociano i genomi dalle specie -------------------------------------
@@ -906,26 +929,35 @@ vector<double> Cga::ResetAndKill(vector<double> FitnessScores)
   curSp = m_vecSpecies.begin();
   while (curSp != m_vecSpecies.end())
   {
+	 
     //si uccidono le specie che sono rimaste vuote. Anche quelle che non migliorano
 	//a meno che non sia la specie milgiore
     if ( (curSp->NumMembers()==0) || ((curSp->GensNoImprovement() >= CParams::iNumGensAllowedNoImprovement) &&
          (curSp->BestFitness() < m_dBestEverFitness)) )
 	{
-	  //disaddocia i genomi alla specie
-	  curSp->Purge();
+
+	  vector<CGenome>::iterator curMember;
 
 	  //si eliminano dalla popolazione i membri di questa specie
 	  for(int i = 0; i < ID_member[spc].size(); i++)
 	  {
 		int Pos_member = GetMemberPos(ID_member[spc][i]);
 
-		vector<CGenome>::iterator curMember = m_vecGenomes.begin() + Pos_member;
+		curMember = m_vecGenomes.begin() + Pos_member;
 		m_vecGenomes.erase(curMember);
 
 		//si modifica il vector delle fitness di conseguenza
 		FitnessScores.erase(FitnessScores.begin() + Pos_member);
 	  }
 	  
+	  
+
+	  //disaddocia i genomi alla specie
+	  //curSp->Purge_specializzata();
+	  curSp->Purge();
+	  /*prababilmente qui si devono deallocare gli elementi del m_vecmember della specie*/
+	  /*forse basta definire una nuova funzione purge specializzata*/
+
 	  //si elimina la specie svuotata
 	  curSp = m_vecSpecies.erase(curSp);;
     }
@@ -936,14 +968,17 @@ vector<double> Cga::ResetAndKill(vector<double> FitnessScores)
       ++curSp;
 	}
 		
+	ID_member[spc].clear();
 	spc++;
   }
 
-  //cancelliamo anche i vecchi fenotipi //PROVO A NON FARLO IN MODO TALE CHE RIMANGA SALVATO PER I BEST
-  /*for (int gen=0; gen<m_vecGenomes.size(); ++gen)
+  ID_member.clear();
+
+  //cancelliamo anche i vecchi fenotipi
+  for (int gen=0; gen<m_vecGenomes.size(); ++gen)
   {
     m_vecGenomes[gen].DeletePhenotype();
-  }*/
+  }
 
   return FitnessScores;
 }
@@ -988,9 +1023,9 @@ void Cga::RenderSpeciesInfo(HDC &surface, RECT db)
   int numColours = 255/m_vecSpecies.size();
 
   //larghezza nella barra di un individuo
-  double SlicePerBrain = (double)(db.right-db.left)/(double)(CParams::iPopSize-1);
+  float SlicePerBrain = (float)(db.right-db.left)/(float)(CParams::iPopSize-1);
 
-  double left = db.left;
+  float left = db.left;
 
   //ora si disegnano rettagoli, di larghezza proporzionale al numero di membri della specie e di diverso colore,
   //per ogni specie presente

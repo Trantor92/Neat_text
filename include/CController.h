@@ -17,10 +17,10 @@
 
 
 
-#include "C:\Users\Adele\Desktop\C++_Code\Neat_text\include\utils.h"
-#include "C:\Users\Adele\Desktop\C++_Code\Neat_text\include\CBrain.h"
-#include "C:\Users\Adele\Desktop\C++_Code\Neat_text\include\CParams.h"
-#include "C:\Users\Adele\Desktop\C++_Code\Neat_text\include\Cga.h"
+#include "utils.h"
+#include "CBrain.h"
+#include "CParams.h"
+#include "Cga.h"
 
 
 using namespace std;
@@ -45,7 +45,7 @@ private:
 
 
 	//miglior fitness di sempre
-	double              m_dBestFitness;
+	float              m_dBestFitness;
 
 	//contatore delle generazioni
 	int					m_iGenerations;
@@ -99,7 +99,7 @@ public:
 
 	void            PassInfoHandle(HWND hnd) { m_hwndInfo = hnd; }
 
-	vector<double>  GetFitnessScores()const;
+	vector<float>  GetFitnessScores()const;
 
 };
 

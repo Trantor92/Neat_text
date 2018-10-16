@@ -1,4 +1,4 @@
-#include "C:\Users\Adele\Desktop\C++_Code\Neat_text\include\CSpecies.h"
+#include "CSpecies.h"
 
 
 //----------------------- constructor ------------------------------------
@@ -13,10 +13,10 @@ CSpecies::CSpecies(CGenome  &FirstOrg,
                                        m_iGensNoImprovement(0),
                                        m_iAge(0),
                                        m_Leader(FirstOrg),
-                                       m_dSpawnsRqd(0)
+                                       m_dSpawnsRqd(0.f)
                                      
 {
-  m_vecMembers.push_back(&FirstOrg);
+  m_vecMembers.resize(m_vecMembers.size()+1, &FirstOrg);
   
   m_Leader = FirstOrg;
 }
@@ -47,7 +47,7 @@ void CSpecies::AddMember(CGenome &NewMember, bool is_preliminar)
 		m_Leader = NewMember;
 	}
 
-	m_vecMembers.push_back(&NewMember);
+	m_vecMembers.resize(m_vecMembers.size() + 1, &NewMember);
 }
 
 //-------------------------- Purge ---------------------------------------
@@ -65,12 +65,43 @@ void CSpecies::Purge()
 
   ++m_iGensNoImprovement;
 
-  m_dSpawnsRqd = 0;
+  m_dSpawnsRqd = 0.f;
 }
+
+void CSpecies::Purge_specializzata()
+{
+	CGenome* obj;
+
+	while (!m_vecMembers.empty())
+	{
+		obj = m_vecMembers.back();
+		delete obj;
+
+		m_vecMembers.pop_back();
+	}
+
+	//update age etc
+	++m_iAge;
+
+	++m_iGensNoImprovement;
+
+	m_dSpawnsRqd = 0.f;
+}
+
 
 //questa funzione serve per il corretto funzionamento di Cga::Speciate()
 void CSpecies::Purge_preliminar()
 {
+	/*CGenome* obj;
+
+	while (!m_vecMembers.empty())
+	{
+		obj = m_vecMembers.back();
+		delete obj;
+
+		m_vecMembers.pop_back();
+	}*/
+
 	m_vecMembers.clear();
 }
 
@@ -87,7 +118,7 @@ void CSpecies::AdjustFitnesses()
 
   for (int gen=0; gen<m_vecMembers.size(); ++gen)
   {
-    double fitness = m_vecMembers[gen]->Fitness();
+    float fitness = m_vecMembers[gen]->Fitness();
 
     //Si aumenta la fitness degli individui appartenenti a specie giovani
     if (m_iAge < CParams::iYoungBonusAgeThreshhold)
@@ -102,7 +133,7 @@ void CSpecies::AdjustFitnesses()
     }
 
     //si esegue la condivisione della fitness, calcolo della fitness modificata
-    double AdjustedFitness = fitness/m_vecMembers.size();
+    float AdjustedFitness = fitness/m_vecMembers.size();
 
     m_vecMembers[gen]->SetAdjFitness(AdjustedFitness);
   }
@@ -143,7 +174,7 @@ CGenome CSpecies::Spawn()
   int Num_Members = m_vecMembers.size();
   
   //quale distribuzione di probabilità devo applicare
-  if (CParams::dSurvivalRate != 0)//a gradino
+  if (CParams::dSurvivalRate != 0.f)//a gradino
   {
 	  if (Num_Members == 1)//nel caso in cui la specie è formata da un solo individuo, a prescindere dal
 	  {                    //valore CParams::dSurvivalRate viene restituito l'univo membro
@@ -155,8 +186,8 @@ CGenome CSpecies::Spawn()
 		  //indice che rappresenta il limite del gradino
 		  int MaxIndexSize = (int) (CParams::dSurvivalRate * Num_Members)-1;
 
-		  if (MaxIndexSize > Num_Members - 1)//facendo così generalizzo a qualsiasi CParams::dSurvivalRate
-		  MaxIndexSize = Num_Members - 1;
+		  //facendo così generalizzo a qualsiasi CParams::dSurvivalRate
+		  MaxIndexSize = (MaxIndexSize > Num_Members - 1) ? Num_Members - 1 : ((MaxIndexSize < 1) ? 0 : MaxIndexSize);
 
 		  //estraggo l'indice con distribuzione uniforma nel range definito dal gradino
 	      int TheOne = RandInt(0, MaxIndexSize);

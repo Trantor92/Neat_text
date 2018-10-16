@@ -14,9 +14,9 @@
 #include <fstream>
 #include <iomanip>
 
-#include "C:\Users\Adele\Desktop\C++_Code\Neat_text\include\utils.h"
-#include "C:\Users\Adele\Desktop\C++_Code\Neat_text\include\genotype.h"
-#include "C:\Users\Adele\Desktop\C++_Code\Neat_text\include\phenotype.h"
+#include "utils.h"
+#include "genotype.h"
+#include "phenotype.h"
 
 using namespace std;
 
@@ -51,11 +51,13 @@ struct	SInnovation
 
 	//Se l'innovazione è un nuovo nodo è necessario tenere traccia della sua posizione
 	//(scopo grafico)
-	double      dSplitY,
+	float      dSplitY,
 				dSplitX;
 
 
 	//---------- constuctors --------------------------------
+
+	SInnovation() {};
 
 	SInnovation(int        in,
                 int        out, 
@@ -65,8 +67,8 @@ struct	SInnovation
                                    InnovationType(t),
                                    InnovationID(inov_id),
                                    NeuronID(0),
-                                   dSplitX(0),
-                                   dSplitY(0),
+                                   dSplitX(0.f),
+                                   dSplitY(0.f),
                                    NeuronType(none)
 	{}
 
@@ -86,8 +88,8 @@ struct	SInnovation
                  innov_type  t, 
                  int         inov_id,
                  neuron_type type,
-                 double      x,
-                 double      y):NeuronIn(in),
+                 float      x,
+                 float      y):NeuronIn(in),
                                NeuronOut(out),
                                InnovationType(t),
                                InnovationID(inov_id),
@@ -132,8 +134,8 @@ public:
                             int         to,
                             innov_type  InnovType,
                             neuron_type NeuronType,
-                            double      x,
-                            double      y);
+                            float      x,
+                            float      y);
 
   //crea un nodo standard partire dal numero identificativo in argomento
   SNeuronGene CreateNeuronFromID(int id);

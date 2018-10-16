@@ -35,29 +35,37 @@ struct SNeuronGene
 	//il suo tipo
 	neuron_type NeuronType;
 
+	//is it recurrent
+	bool        bRecurrent;
+
 	//parametro beta della funzione di attivazione, setta la pendenza
-	double		dActivationResponse;
+	float		dActivationResponse;
 
 	//posizione nella griglia grafica; serve per disegnarlo.
-	double		dSplitY, dSplitX;
+	float		dSplitY, dSplitX;
 
 
 	//------ constructor ----------------
+
+	SNeuronGene() {};
+
 	SNeuronGene(neuron_type type,
               int         id,
-              double      splitY,
-              double      splitX,
-              double      act = 1):iID(id),
+              float      splitY,
+              float      splitX,
+			  bool       r = false,
+              float      act = 1.f):iID(id),
                                    NeuronType(type),
                                    dSplitY(splitY),
                                    dSplitX(splitX),
+								   bRecurrent(r),
                                    dActivationResponse(act){}
 
 	//overload << for streaming
 	friend ostream& operator <<(ostream &os, const SNeuronGene &rhs)
 	{
 	  os << "\nNeuron: " << rhs.iID << "  Type: " << rhs.NeuronType
-		 << "  Activation: " << rhs.dActivationResponse
+		 << "  Recurrent: " << rhs.bRecurrent << "  Activation: " << rhs.dActivationResponse
 		 << "  SplitX: " << rhs.dSplitX << "  SplitY: " << rhs.dSplitY;
     
 		 return os;
@@ -75,7 +83,7 @@ struct SLinkGene
 	        ToNeuron;
 	
 	//il suo peso sinaptico
-	double	dWeight;
+	float	dWeight;
 
 	//flag che indica se questo gene è abilitato o soppresso
 	bool    bEnabled;
@@ -93,7 +101,7 @@ struct SLinkGene
             int    out,
             bool   enable,
             int    tag,
-            double weight,
+            float weight,
 		    bool rec = false):bEnabled(enable),
 					  InnovationID(tag),
                       FromNeuron(in),

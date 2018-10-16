@@ -1,11 +1,35 @@
-#include "C:\Users\Adele\Desktop\C++_Code\Neat_text\include\phenotype.h"
+#include "phenotype.h"
+
+/*
+SNeuron::~SNeuron()
+{
+	for (int i = 0; i < vecLinksIn.size(); ++i)
+	{
+		delete vecLinksIn[i].pIn; vecLinksIn[i].pIn = nullptr;
+		delete vecLinksIn[i].pOut; vecLinksIn[i].pOut = nullptr;
+	}
+
+	for (int i = 0; i < vecLinksOut.size(); ++i)
+	{
+		delete vecLinksOut[i].pIn; vecLinksOut[i].pIn = nullptr;
+		delete vecLinksOut[i].pOut; vecLinksOut[i].pOut = nullptr;
+	}
+
+}
+*/
+
+/*SLink::~SLink()
+{
+	delete pIn;
+	delete pOut;
+}*/
 
 //------------------------------------ Sigmoid function ------------------------
 //  funzione di attivazione del neurone
 //----------------------------------------------------------------------------
-double CNeuralNet::Sigmoid(float netinput, float response)
+float CNeuralNet::Sigmoid(float netinput, float response)
 {
-	return ( 1 / ( 1 + exp(-netinput / response)));
+	return ( 1.f / ( 1.f + exp(-netinput / response)));
 }
 
 
@@ -24,7 +48,7 @@ CNeuralNet::CNeuralNet(vector<SNeuron*> neurons,
 CNeuralNet::~CNeuralNet()
 {
   //pulisce il vector che contiene i neuroni
-  for (int i=0; i<m_vecpNeurons.size(); ++i)
+  /*for (int i=0; i<m_vecpNeurons.size(); ++i)
   {
     if (m_vecpNeurons[i])
     {
@@ -33,10 +57,24 @@ CNeuralNet::~CNeuralNet()
       m_vecpNeurons[i] = NULL;
     }
   }
+
+  m_vecpNeurons.clear();
+  */
+
+	SNeuron* obj;
+
+  while (!m_vecpNeurons.empty())
+  {
+	  obj = m_vecpNeurons.back();
+	  delete obj;
+
+	  m_vecpNeurons.pop_back();
+  }
+
 }
 
 //----------------------------------Update--------------------------------
-//	prende un array di double come input e lo asscoia alle attivazioni dei
+//	prende un array di float come input e lo asscoia alle attivazioni dei
 //  neuroni di input. la funzione quindi agisce a step attraversando la tutta rete.
 //  ad ogni step viene ricalcolato l'input netto di ogni neurone. Dopo un numero
 //  di step pari alla profondità si ottiene l'attivazione finale dei neuroni di output (snapshot)
@@ -91,17 +129,17 @@ vector<float> CNeuralNet::Update(const vector<float> &inputs,
     while (cNeuron < m_vecpNeurons.size())
     {
       //conterrà l'input netto del neurone
-      double sum = 0;
+      float sum = 0.f;
 
       //calcolo l'input netto del neurone. sommo le attivazioni di tutti i neuroni aventi link uscenti
 	  //che entrano nel neurone in esame, moltiplicadole per il peso sinaptico della connessione
       for (int lnk=0; lnk<m_vecpNeurons[cNeuron]->vecLinksIn.size(); ++lnk)
       {
         //estraggo il peso del link entrante
-        double Weight = m_vecpNeurons[cNeuron]->vecLinksIn[lnk].dWeight;
+        float Weight = m_vecpNeurons[cNeuron]->vecLinksIn[lnk].dWeight;
 
         //estraggo l'attivazione del neurone da cui esce questo link
-        double NeuronOutput =
+        float NeuronOutput =
         m_vecpNeurons[cNeuron]->vecLinksIn[lnk].pIn->dOutput;
 
         //calcolo l'input netto
@@ -134,7 +172,7 @@ vector<float> CNeuralNet::Update(const vector<float> &inputs,
   {
     for (int n=0; n<m_vecpNeurons.size(); ++n)
     {
-      m_vecpNeurons[n]->dOutput = 0;
+      m_vecpNeurons[n]->dOutput = 0.f;
     }
   }
 
@@ -143,6 +181,13 @@ vector<float> CNeuralNet::Update(const vector<float> &inputs,
   return outputs;
 }
 
+void CNeuralNet::Reset_activation()
+{
+	for (int n = 0; n<m_vecpNeurons.size(); ++n)
+	{
+		m_vecpNeurons[n]->dOutput = 0.f;
+	}
+}
 
 //----------------------------- TidyXSplits -----------------------------
 //
@@ -155,13 +200,13 @@ void TidyXSplits(vector<SNeuron*> &neurons)
   vector<int>    SameLevelNeurons;
 
   //immagazzina i layer già controllati
-  vector<double> DepthsChecked;
+  vector<float> DepthsChecked;
 
 
   //per ogni neurone trova tutti i neuroni che sono nel medesimo layer (dSplitY)
   for (int n=0; n<neurons.size(); ++n)
   {
-    double ThisDepth = neurons[n]->dSplitY;
+    float ThisDepth = neurons[n]->dSplitY;
 
     //permette di controllare se questo layer è già stato messo a posto
     bool bAlreadyChecked = false;
@@ -199,7 +244,7 @@ void TidyXSplits(vector<SNeuron*> &neurons)
       }
 
       //si calcola lo spaziamento che devono avere i neuroni nel layer
-      double slice = 1.0/(SameLevelNeurons.size()+1);
+      float slice = 1.f/(SameLevelNeurons.size()+1.f);
   
 
       //si assegna la posizione nel layer ad ogni neurone che vi appartiene
@@ -207,7 +252,7 @@ void TidyXSplits(vector<SNeuron*> &neurons)
       {
         int idx = SameLevelNeurons[i];
 
-        neurons[idx]->dSplitX = (i+1) * slice;
+        neurons[idx]->dSplitX = (i+1.f) * slice;
       }
     }
 
@@ -236,6 +281,12 @@ void CNeuralNet::DrawNet(HDC &surface, int Left, int Right, int Top, int Bottom)
   int spanX = Right - Left;
   int spanY = Top - Bottom - (2*border);
 
+  //raggio dei neuroni (funzione della largezza della surface)
+  int radNeuron = spanX / 60;
+  int radLink = radNeuron * 1.5f;
+
+  spanY -= 2*radLink;
+
   for (int cNeuron=0; cNeuron<m_vecpNeurons.size(); ++cNeuron)
   {
     m_vecpNeurons[cNeuron]->iPosX = Left + spanX*m_vecpNeurons[cNeuron]->dSplitX;
@@ -261,8 +312,7 @@ void CNeuralNet::DrawNet(HDC &surface, int Left, int Right, int Top, int Bottom)
   OldBrush = (HBRUSH)SelectObject(surface, GetStockObject(HOLLOW_BRUSH));
 
 
-  //raggio dei neuroni (funzione della largezza della surface)
-  int radNeuron = spanX/60;
+  
 
   //ora che si hanno le coordinate di ogni neurone della reteno si può passare a disegnare.
   //Prima di tutto si itera sui neuroni e si disegnano i link.
@@ -313,8 +363,15 @@ void CNeuralNet::DrawNet(HDC &surface, int Left, int Right, int Top, int Bottom)
         HPEN tempPen = (HPEN)SelectObject(surface, Pen);
         
         //disegna il link utilizzando la penna creata
-        MoveToEx(surface, StartX, StartY, NULL);
-        LineTo(surface, EndX, EndY);
+		//LO DISEGNO SOLO SE é UNA AGGIUNTA ALLA STRUTTURA MINIMA
+		if ((cNeuron <= CParams::iNumInputs) && (m_vecpNeurons[cNeuron]->vecLinksOut[cLnk].pOut->NeuronType == output))
+			;
+		else
+		{
+			MoveToEx(surface, StartX, StartY, NULL);
+			LineTo(surface, EndX, EndY);
+		}
+		       
 
         SelectObject(surface, tempPen);
 
@@ -327,42 +384,85 @@ void CNeuralNet::DrawNet(HDC &surface, int Left, int Right, int Top, int Bottom)
         SelectObject(surface, GreenPen);
         
         //disegna il link utilizzando la penna verde
-        MoveToEx(surface, StartX, StartY, NULL);
-        LineTo(surface, EndX, EndY);
-      }
+        
+		if (m_vecpNeurons[cNeuron]->vecLinksOut[cLnk].pOut->NeuronType != output)
+		{
+			MoveToEx(surface, StartX, StartY, NULL);
+			LineTo(surface, EndX, EndY);
+
+		}
+
+	  }
 
       //se il link è diretto da un layer superiore ad uno inferiore (backward)
       else
       {
-		int thickness = (int)(fabs(m_vecpNeurons[cNeuron]->vecLinksOut[cLnk].dWeight));
+		  if ((StartX == EndX) && (StartY == EndY))
+		  {
 
-		Clamp(thickness, 0, MaxThickness);
+			  int thickness = (int)(fabs(m_vecpNeurons[cNeuron]->vecLinksOut[cLnk].dWeight));
 
-		HPEN Pen;
+			  Clamp(thickness, 0, MaxThickness);
 
-		//crea una penna rossa per i pesi inibitori (<0)
-		if (m_vecpNeurons[cNeuron]->vecLinksOut[cLnk].dWeight <= 0)
-		{
-		  Pen = CreatePen(PS_SOLID, thickness, RGB(255, 0, 0));
+			  HPEN Pen;
 
-		}
+			  //red for inhibitory
+			  if (m_vecpNeurons[cNeuron]->vecLinksOut[cLnk].dWeight <= 0)
+			  {
+				  Pen = CreatePen(PS_SOLID, thickness, RGB(255, 0, 0));
+			  }
 
-		//crea una penna blu per i pesi eccitatori (>0)
-		else
-		{
-	      Pen = CreatePen(PS_SOLID, thickness, RGB(0, 0, 255));
-		}
+			  //blue for excitory
+			  else
+			  {
+				  Pen = CreatePen(PS_SOLID, thickness, RGB(0, 0, 255));
+			  }
+
+			  HPEN tempPen = (HPEN)SelectObject(surface, Pen);
+
+			  //we have a recursive link to the same neuron draw an ellipse
+			  int x = m_vecpNeurons[cNeuron]->iPosX;
+			  int y = m_vecpNeurons[cNeuron]->iPosY - (1.5f * radNeuron);
+
+			  Ellipse(surface, x - radLink, y - radLink, x + radLink, y + radLink);
+
+			  SelectObject(surface, tempPen);
+
+			  DeleteObject(Pen);
+		  }
+		  else
+		  {
+
+			  int thickness = (int)(fabs(m_vecpNeurons[cNeuron]->vecLinksOut[cLnk].dWeight));
+
+			  Clamp(thickness, 0, MaxThickness);
+
+			  HPEN Pen;
+
+			  //crea una penna rossa per i pesi inibitori (<0)
+			  if (m_vecpNeurons[cNeuron]->vecLinksOut[cLnk].dWeight <= 0)
+			  {
+				  Pen = CreatePen(PS_SOLID, thickness, RGB(255, 0, 0));
+
+			  }
+
+			  //crea una penna blu per i pesi eccitatori (>0)
+			  else
+			  {
+				  Pen = CreatePen(PS_SOLID, thickness, RGB(0, 0, 255));
+			  }
 
 
-		HPEN tempPen = (HPEN)SelectObject(surface, Pen);
+			  HPEN tempPen = (HPEN)SelectObject(surface, Pen);
 
-		//disegna il link utilizzando la penna creata
-		MoveToEx(surface, StartX, StartY, NULL);
-		LineTo(surface, EndX, EndY);
+			  //disegna il link utilizzando la penna creata
+			  MoveToEx(surface, StartX, StartY, NULL);
+			  LineTo(surface, EndX, EndY);
 
-		SelectObject(surface, tempPen);
+			  SelectObject(surface, tempPen);
 
-		DeleteObject(Pen);   
+			  DeleteObject(Pen);
+		  }
       }
     }
   }//ho disegnato tutti link
@@ -370,6 +470,20 @@ void CNeuralNet::DrawNet(HDC &surface, int Left, int Right, int Top, int Bottom)
   //ora si disegnano i neuroni
   SelectObject(surface, RedBrush);
   SelectObject(surface, GetStockObject(BLACK_PEN));
+
+  //now draw the neurons and their IDs
+  SelectObject(surface, RedBrush);
+  SelectObject(surface, GetStockObject(BLACK_PEN));
+
+  for (int cNeuron = 0; cNeuron<m_vecpNeurons.size(); ++cNeuron)
+  {
+	  int x = m_vecpNeurons[cNeuron]->iPosX;
+	  int y = m_vecpNeurons[cNeuron]->iPosY;
+
+	  //display the neuron
+	  Ellipse(surface, x - radNeuron, y - radNeuron, x + radNeuron, y + radNeuron);
+  }
+  /*
 
   for (int cNeuron=0; cNeuron<m_vecpNeurons.size(); ++cNeuron)
   {
@@ -410,6 +524,8 @@ void CNeuralNet::DrawNet(HDC &surface, int Left, int Right, int Top, int Bottom)
     //disegna il neurone come un cerchio colorato
     Ellipse(surface, x-radNeuron, y-radNeuron, x+radNeuron, y+radNeuron); 
   }
+
+  */
 
   //pulizia degli strumenti grafici
   SelectObject(surface, OldPen);

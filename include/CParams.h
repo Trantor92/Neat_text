@@ -17,7 +17,7 @@
 #include <string>
 #include <iostream>
 
-#include "C:\Users\Adele\Desktop\C++_Code\Neat_text\include\utils.h"
+#include "utils.h"
 
 using namespace std;	
 
@@ -34,9 +34,9 @@ public:
 	 
   static bool is_Random;//se la simulazione deve essere riproducibile o meno
 
-  static double dPi;
-  static double dHalfPi;
-  static double dTwoPi;
+  static float dPi;
+  static float dHalfPi;
+  static float dTwoPi;
 
   static int    WindowWidth;
   static int    WindowHeight;
@@ -53,7 +53,7 @@ public:
   static int    iNumOutputs;
   
   //starting value per il beta della funzione di attivazione
-  static double dSigmoidResponse;
+  static float dSigmoidResponse;
 
   //numero massimo di iterazione ricorrenti per cacolare la depth, dopo viene considerata ciclica
   static int	i_MaxDepth;
@@ -67,23 +67,26 @@ public:
   //numero di tentativi per mutare un genoma aggiungerndo un link.
   //see CGenome::AddLink()
   static int    iNumAddLinkAttempts;
+  static float dChanceAddRecurrentLink;
+  static int iNumTrysToFindLoopedLink;
+
 
   //probabilità di aggiungere un link o nodo
-  static double dChanceAddLink;
-  static double dChanceAddNode;
+  static float dChanceAddLink;
+  static float dChanceAddNode;
 
   //probabilità di mutare i pesi sinaptici
   //see CGenome::Mutate()
-  static double dMutationRate;
-  static double dMaxWeightPerturbation;
-  static double dProbabilityWeightReplaced;
+  static float dMutationRate;
+  static float dMaxWeightPerturbation;
+  static float dProbabilityWeightReplaced;
 
   //probabilità di mutare la funzione di attivazione
-  static double dActivationMutationRate;
-  static double dMaxActivationPerturbation;
+  static float dActivationMutationRate;
+  static float dMaxActivationPerturbation;
 
   //soglia di compatibilità per la speciazione
-  static double dCompatibilityThreshold;
+  static float dCompatibilityThreshold;
 
 
 
@@ -92,17 +95,17 @@ public:
   //----------------------------------------------------------------------
 
   //bonus per le specie giovani
-  static double dYoungFitnessBonus;
+  static float dYoungFitnessBonus;
 
   //soglia per giudicare le specie giovani
   static int    iYoungBonusAgeThreshhold;
 
   //come vengono estratte le specie nella procedura di crossover
   //see CSpecies::Spawn()
-  static double dSurvivalRate;
+  static float dSurvivalRate;
 
   //penalizzazione per le specie vecchie
-  static double dOldAgePenalty;
+  static float dOldAgePenalty;
 
   //soglia per giudicare le specie vecchie
   static int    iOldAgeThreshold;
@@ -126,7 +129,7 @@ public:
   static int    iNumBestBrains;
 
   //probabilità di eseguire crossover
-  static double dCrossoverRate;
+  static float dCrossoverRate;
 
   //numero massimo di specie ammesse
   static int    iMaxNumberOfSpecies;
@@ -140,11 +143,13 @@ public:
   static string iNameTraining, iNameTest; //nomi dei file che contengono i dati
 
   //dati
- // static vector<vector<double>> TrainingInputs;
+
   static vector<char> TrainingInputs;
-  static vector<vector<double>> TrainingOutputs; static vector<string> squadre_train;
-  static vector<vector<double>> TestInputs;
-  static vector<vector<double>> TestOutputs; static vector<string> squadre_test;
+
+  /*static vector<vector<float>> TrainingInputs;
+  static vector<vector<float>> TrainingOutputs; static vector<string> squadre_train;
+  static vector<vector<float>> TestInputs;
+  static vector<vector<float>> TestOutputs; static vector<string> squadre_test;*/
 
 
   static bool isNorm;//se effettuare normalizzazione dell'array delle features o acquisirlo tal quale
@@ -163,9 +168,9 @@ public:
       return false;
     }
 
-    dPi     = 3.14159265358979;
-    dHalfPi = dPi / 2;
-    dTwoPi  = dPi * 2;
+    dPi     = 3.14159265358979f;
+    dHalfPi = dPi / 2.f;
+    dTwoPi  = dPi * 2.f;
 
   
 

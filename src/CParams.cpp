@@ -1,43 +1,45 @@
-#include "C:\Users\Adele\Desktop\C++_Code\Neat_text\include\CParams.h"
+#include "CParams.h"
 
 
-double CParams::dPi                       = 0;
-double CParams::dHalfPi                   = 0;
-double CParams::dTwoPi                    = 0;
+float CParams::dPi                       = 0.f;
+float CParams::dHalfPi                   = 0.f;
+float CParams::dTwoPi                    = 0.f;
 int CParams::WindowWidth                  = GetSystemMetrics(SM_CXSCREEN) / 2;
 int CParams::WindowHeight                 = 400;
 int CParams::iNumInputs                   = 0;
 int CParams::iNumOutputs                  = 0;
 int CParams::iPopSize                     = 0;
 
-double CParams::dSigmoidResponse          = 1;
+float CParams::dSigmoidResponse          = 1.f;
 int CParams::iNumAddLinkAttempts          = 0;
 
-double CParams::dYoungFitnessBonus        = 0;
+float CParams::dYoungFitnessBonus        = 0.f;
 int CParams::iYoungBonusAgeThreshhold     = 0;
-double CParams::dSurvivalRate             = 0;
+float CParams::dSurvivalRate             = 0.f;
 int CParams::InfoWindowWidth              = GetSystemMetrics(SM_CXSCREEN) / 2;
-int CParams::InfoWindowHeight             = GetSystemMetrics(SM_CYSCREEN) * 0.9;
+int CParams::InfoWindowHeight             = GetSystemMetrics(SM_CYSCREEN) * 0.9f;
 int CParams::iNumGensAllowedNoImprovement = 0;
 int CParams::iMaxPermittedNeurons         = 0;
-double CParams::dChanceAddLink            = 0;
-double CParams::dChanceAddNode            = 0;
+float CParams::dChanceAddLink            = 0.f;
+float CParams::dChanceAddNode            = 0.f;
+float CParams::dChanceAddRecurrentLink = 0.f;
+int CParams::iNumTrysToFindLoopedLink = 0;
 
-double CParams::dMutationRate             = 0;
-double CParams::dMaxWeightPerturbation    = 0;
-double CParams::dProbabilityWeightReplaced= 0;
+float CParams::dMutationRate             = 0.f;
+float CParams::dMaxWeightPerturbation = 0.f;
+float CParams::dProbabilityWeightReplaced= 0.f;
 
-double CParams::dActivationMutationRate   = 0;
-double CParams::dMaxActivationPerturbation= 0;
+float CParams::dActivationMutationRate   = 0.f;
+float CParams::dMaxActivationPerturbation= 0.f;
 
-double CParams::dCompatibilityThreshold   = 0;
+float CParams::dCompatibilityThreshold   = 0.f;
 
 int CParams::iOldAgeThreshold             = 0;
-double CParams::dOldAgePenalty            = 0;
-double CParams::dCrossoverRate            = 0;
+float CParams::dOldAgePenalty            = 0.f;
+float CParams::dCrossoverRate            = 0.f;
 int CParams::iMaxNumberOfSpecies          = 0;
 
-int CParams::iNumBestBrains				  = 1;
+int CParams::iNumBestBrains				  = 4;
 
 
 int CParams::i_MaxDepth = 100;
@@ -48,13 +50,14 @@ string CParams::iNameTest;
 //---------------------------------------------
 
 
-vector<vector<double>> CParams::TrainingOutputs;
-vector<vector<double>> CParams::TestOutputs;
-//vector<vector<double>> CParams::TrainingInputs;
 vector<char> CParams::TrainingInputs;
-vector<vector<double>> CParams::TestInputs;
 
-vector<string> CParams::squadre_train; vector<string> CParams::squadre_test;
+/*vector<vector<float>> CParams::TrainingOutputs;
+vector<vector<float>> CParams::TestOutputs;
+vector<vector<float>> CParams::TrainingInputs;
+vector<vector<float>> CParams::TestInputs;
+
+vector<string> CParams::squadre_train; vector<string> CParams::squadre_test;*/
 
 bool CParams::isNorm = true;
 bool CParams::is_Random;
@@ -109,6 +112,10 @@ bool CParams::LoadInParameters(char* szFileName)
   grab >> ParamDescription;
   grab >> iNumAddLinkAttempts;
   grab >> ParamDescription;
+  grab >> dChanceAddRecurrentLink;
+  grab >> ParamDescription;
+  grab >> iNumTrysToFindLoopedLink;
+  grab >> ParamDescription;
   grab >> dChanceAddNode;
   grab >> ParamDescription;
   grab >> dMutationRate;
@@ -146,7 +153,11 @@ bool CParams::LoadInParameters(char* szFileName)
 	  return false;
   }
 
-  CParams::iNumInputs = CParams::iNumOutputs = 256;
+  //CParams::iNumInputs = CParams::iNumOutputs = 256;
+
+  //CParams::iNumInputs = CParams::iNumOutputs = 97;
+
+  CParams::iNumInputs = CParams::iNumOutputs = 32;
 
   char c;
 
@@ -156,7 +167,19 @@ bool CParams::LoadInParameters(char* szFileName)
 
 	  TrainingInputs.push_back(c);
   }
+
   /*
+  int rows, n_out, n_in;
+
+  float norm;
+
+  train >> rows; train >> CParams::iNumInputs; train >> CParams::iNumOutputs;
+  
+  n_in = CParams::iNumInputs; n_out = CParams::iNumOutputs;
+
+  string squadre;
+ 
+  vector<float> temp; float lec;
   for (int i = 0; i < rows; i++)
   {
 	  train >> ParamDescription; squadre = ParamDescription; squadre += "\t";

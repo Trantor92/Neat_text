@@ -14,9 +14,9 @@
 #include <windows.h>
 #include <algorithm>
 
-#include "C:\Users\Adele\Desktop\C++_Code\Neat_text\include\utils.h"
-#include "C:\Users\Adele\Desktop\C++_Code\Neat_text\include\CParams.h"
-#include "C:\Users\Adele\Desktop\C++_Code\Neat_text\include\genes.h"
+#include "utils.h"
+#include "CParams.h"
+#include "genes.h"
 
 
 using namespace std;
@@ -36,7 +36,7 @@ struct SLink
   SNeuron*  pOut;
 
   //peso sinaptico
-  double  dWeight;
+  float  dWeight;
 
   //link ricorrente?
   bool    bRecurrent;
@@ -45,11 +45,13 @@ struct SLink
 
   //----- constructor -----------
 
-  SLink(double dW, SNeuron* pIn, SNeuron* pOut, bool bRec) :dWeight(dW),
+  SLink(float dW, SNeuron* pIn, SNeuron* pOut, bool bRec) :dWeight(dW),
 															pIn(pIn),
 															pOut(pOut),
 															bRecurrent(bRec)
   {}
+
+  //~SLink();
 };
 
 
@@ -66,7 +68,7 @@ struct SNeuron
   vector<SLink> vecLinksOut;
 
   //attivazione del neurone
-  double        dOutput;
+  float        dOutput;
 
   //tipologia del neurone
   neuron_type   NeuronType;
@@ -75,28 +77,30 @@ struct SNeuron
   int           iNeuronID;
 
   //parametro beta della funzione di attivazione di questo neurone
-  double        dActivationResponse;
+  float        dActivationResponse;
 
   //variabili utilizzate in fase grafica
   int           iPosX,   iPosY;
-  double        dSplitY, dSplitX;
+  float        dSplitY, dSplitX;
 
 
   //------------ construtor --------------------------------------
   SNeuron(neuron_type type,
           int         id,
-          double      y,
-          double      x,
-          double      ActResponse):NeuronType(type),
+          float      y,
+          float      x,
+          float      ActResponse):NeuronType(type),
                                    iNeuronID(id),
-                                   dOutput(0),
-                                   iPosX(0),
-                                   iPosY(0),
+                                   dOutput(0.f),
+                                   iPosX(0.f),
+                                   iPosY(0.f),
                                    dSplitY(y),
                                    dSplitX(x),
                                    dActivationResponse(ActResponse)
   {}
 
+  
+  //~SNeuron();
 
 };
 
@@ -137,9 +141,9 @@ public:
   vector<float>  Update(const vector<float> &inputs, const run_type type);
 
   //funzione di attivazione del neurone
-  double		  Sigmoid(float netinput, float response);
+  float		  Sigmoid(float netinput, float response);
 
-
+  void        Reset_activation();
 
   //Disegna il fenotipo nella surface specificata
   void            DrawNet(HDC &surface,

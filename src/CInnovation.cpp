@@ -1,4 +1,4 @@
-#include "C:\Users\Adele\Desktop\C++_Code\Neat_text\include\CInnovation.h"
+#include "CInnovation.h"
 
 //---------------------------------- constructor -------------------------
 //
@@ -12,9 +12,13 @@ CInnovation::CInnovation(vector<SLinkGene>   start_genes,
 	m_NextInnovationNum		= 0;
 
 	//aggiunge le innvazioni dei nodi
-	for (int nd=0; nd<start_neurons.size(); ++nd)
+
+	int nd;
+
+	m_vecInnovs.resize(start_neurons.size() + start_genes.size());
+	for (nd=0; nd<start_neurons.size(); ++nd)
 	{
-		 m_vecInnovs.push_back(SInnovation(start_neurons[nd],
+		 m_vecInnovs[nd] = (SInnovation(start_neurons[nd],
 							   m_NextInnovationNum++,
 							   m_NextNeuronID++));
 	 }
@@ -27,7 +31,7 @@ CInnovation::CInnovation(vector<SLinkGene>   start_genes,
 								 new_link,
 								 m_NextInnovationNum);
 
-			m_vecInnovs.push_back(NewInnov);
+			m_vecInnovs[nd + cGen] = (NewInnov);
 
 			++m_NextInnovationNum;
 		}
@@ -73,7 +77,7 @@ int CInnovation::CreateNewInnovation(int in, int out, innov_type type)
 		++m_NextNeuronID;
 	}
 
-	m_vecInnovs.push_back(new_innov);
+	m_vecInnovs.resize(m_vecInnovs.size()+1,new_innov);
 
 	++m_NextInnovationNum;
 	
@@ -89,8 +93,8 @@ int CInnovation::CreateNewInnovation(int          from,
                                      int          to,
                                      innov_type   InnovType,
                                      neuron_type  NeuronType,
-                                     double       x,
-                                     double       y)
+                                     float       x,
+                                     float       y)
 { 
 
 	SInnovation new_innov(from, to, InnovType, m_NextInnovationNum, NeuronType, x, y);
@@ -102,7 +106,7 @@ int CInnovation::CreateNewInnovation(int          from,
 		++m_NextNeuronID;
 	}
 
-	m_vecInnovs.push_back(new_innov);
+	m_vecInnovs.resize(m_vecInnovs.size() + 1, new_innov);
 
 	++m_NextInnovationNum;
 	
@@ -118,7 +122,7 @@ int CInnovation::CreateNewInnovation(int          from,
 //------------------------------------------------------------------------
 SNeuronGene CInnovation::CreateNeuronFromID(int NeuronID)
 {
-  SNeuronGene temp(hidden,0,0,0);
+  SNeuronGene temp(hidden,0,0.f,0.f);
 
   for (int inv=0; inv<m_vecInnovs.size(); ++inv)
   {

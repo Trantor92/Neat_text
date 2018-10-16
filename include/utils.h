@@ -17,10 +17,10 @@ using namespace std;
 
 
 //ritorna un random float in [0,1[
-inline double RandFloat() {return (rand())/(RAND_MAX+1.0);}
+inline float RandFloat() {return (rand())/(RAND_MAX+1.f);}
 
 //ritorna un random float in [0,1]
-inline double RandFloat_1() { return (rand()) / ((double)RAND_MAX); }
+inline float RandFloat_1() { return (rand()) / ((float)RAND_MAX); }
 
 //ritorna un random int in [x,y]
 inline int	  RandInt(int x, int y) 
@@ -41,7 +41,7 @@ inline bool   RandBool()
 }
 
 //ritorna un random float in ]-1,1[, con una distribuzione lineare a tratti 
-inline double RandomClamped()	   {return RandFloat() - RandFloat();}
+inline float RandomClamped()	   {return RandFloat() - RandFloat();}
 
 
 /////////////////////////////////////////////////////////////////////
@@ -72,7 +72,7 @@ inline string ftos(float arg)
 }
 
 //mantiene il primo argomento fra gli altri due
-inline void Clamp(double &arg, double min, double max)
+inline void Clamp(float &arg, float min, float max)
 {
 	if (arg < min)
 	{
@@ -100,12 +100,12 @@ inline void Clamp(int &arg, int min, int max)
 }
 
 //funzione di arrotondamento ad intero
-inline int Rounded(double val)
+inline int Rounded(float val)
 {
   int    integral = (int)val;
-  double mantissa = val - integral;
+  float mantissa = val - integral;
 
-  if (mantissa < 0.5)
+  if (mantissa < 0.5f)
   {
     return integral;
   }
@@ -133,6 +133,8 @@ inline wstring s2ws(const std::string& s)
 //crea una directory
 void crea_cartella(char *indirizzo_cartella, string nome_cartella);
 
-int Softmax(vector<float> &output);
+int Softmax(vector<float> &outputs);
+
+float Calcola_Scarto(int, vector<float>);
 
 #endif
