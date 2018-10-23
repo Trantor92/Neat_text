@@ -124,6 +124,8 @@ public:
 
 	~Cga();
 
+	int MaxGenAllowedNoImprovement;
+	int Calcola_MaxGenerationNoImprovement();
 
 	//funzione che esegue una generazione dell'algoritmo genetico
 	vector<CNeuralNet*>	 Epoch(const vector<float> &FitnessScores);
@@ -165,6 +167,14 @@ public:
 
 	void				SetFitness(int genome, float fitness){m_vecGenomes[genome].SetFitness(fitness);}
 
+	void    SetBestEverFitness(double fitness) { m_dBestEverFitness = fitness; }
+
+	void    SetFitnessSpecies(double fitness) {
+		for (int i = 0; i < m_vecSpecies.size(); i++)
+		{
+			m_vecSpecies[i].SetBestFitness(0);
+		}
+	}
 };
 
 #endif

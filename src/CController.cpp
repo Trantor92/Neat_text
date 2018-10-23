@@ -1,5 +1,9 @@
 #include "CController.h"
+
+#ifdef _OPENMP
 #include <omp.h>
+#endif // DEBUG
+
 
 //---------------------------------------constructor---------------------
 //
@@ -30,6 +34,7 @@ CController::CController(HWND hwndMain,
 		m_vecBestBrains[i] = (CBrain());
 	}
 
+	size_batch = 0;
 
 	//creazione della popolazione a cui applicare l'algoritmo genetico, associata ai Brains
 	m_pPop = new Cga(CParams::iPopSize,
@@ -89,12 +94,52 @@ bool CController::Update(ofstream &out0, ofstream &out1, ofstream &out2, ofstrea
 {
 	m_pPop->Destroym_vecBestPhenotypes();
 
+
+	/*inrerire con un controllo sulla fitness percentuale ad esempio quando è sull'80%
+	cambiare gli input e di conseguenza la size del batch (size_batch += 0.8*size_input_temp)*/
+
+	/*if ((!m_iGenerations) || ( m_vecBestBrains[0].Fitness() >= 80.f))
+	{
+		size_prev = 10;
+
+		//versione combo standard col batch che aumenta
+		/*if ((size_batch + size_prev) < CParams::TrainingInputs.size())
+			size_batch += size_prev;
+		else
+			size_batch = CParams::TrainingInputs.size();*/
+
+
+		//versinoe batch mobile
+	/*	size_batch = 20;
+
+		TrainingInputs_piccoli.clear();
+		GeneraData_set(TrainingInputs_piccoli);
+
+		conteggio_step++;
+
+		ResetBestFitness();
+	}*/
+
+
+	size_batch = 100;
+	size_prev = CParams::TrainingInputs.size() - 100;
+
+#ifdef _OPENMP
 #pragma omp parallel for
+#endif // DEBUG
 
 		for (int i = 0; i<m_NumBrains; ++i)
 		{
 
 			m_vecBrains[i].Update(CParams::TrainingInputs);
+
+			/*m_vecBrains[i].index_act = 0;
+			m_vecBrains[i].Update_Batch(CParams::TrainingInputs, size_batch);
+			*/
+
+			/*m_vecBrains[i].index_act = (conteggio_step - 1)*size_prev;
+			m_vecBrains[i].Update_Batch(TrainingInputs_piccoli, size_batch);
+			*/
 
 			//calcola le previsioni dei Brains nei confronti del Training Set
 			/*if (!m_vecBrains[i].Update(CParams::TrainingInputs))
@@ -106,7 +151,12 @@ bool CController::Update(ofstream &out0, ofstream &out1, ofstream &out2, ofstrea
 			}*/
 
 			//calcola la fitness dei Brains
-			m_vecBrains[i].EndOfRunCalculations(CParams::TrainingInputs);
+			m_vecBrains[i].EndOfRunCalculations_locale(CParams::TrainingInputs);
+			//m_vecBrains[i].EndOfRunCalculations_globale(CParams::TrainingInputs);
+			
+			//m_vecBrains[i].EndOfRunCalculations_Batch(CParams::TrainingInputs, size_batch);
+
+			//m_vecBrains[i].EndOfRunCalculations_Batch(TrainingInputs_piccoli, size_batch);
 		}
 
 
@@ -118,7 +168,7 @@ bool CController::Update(ofstream &out0, ofstream &out1, ofstream &out2, ofstrea
 
 		//Performa la creazione della nuova generazione di individui e ne restituisce i fenotipi.
 		//questa funzione modifica internamente il vector dei genomi.
-vector<CNeuralNet*> pBrains = m_pPop->Epoch(GetFitnessScores());
+		vector<CNeuralNet*> pBrains = m_pPop->Epoch(GetFitnessScores());
 
 		m_dBestFitness = m_pPop->BestEverFitness();
 
@@ -139,15 +189,25 @@ vector<CNeuralNet*> pBrains = m_pPop->Epoch(GetFitnessScores());
 
 		/////////////// Calcolo delle prestazioni complete per i migliori individui ////////////////////////////
 
-		//float fit_perc;//prestazioni in termini di Rate%
+		float fit_perc;//prestazioni in termini di Rate%
 
-//#pragma omp parallel for
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif // DEBUG
 
 		for (int i = 0; i<m_vecBestBrains.size(); ++i)
 		{
 			m_vecBestBrains[i].SetBrain(pBestBrains[i]);
 
 			m_vecBestBrains[i].Update(CParams::TrainingInputs);
+
+			/*m_vecBestBrains[i].index_act = 0;
+			m_vecBestBrains[i].Update_Batch(CParams::TrainingInputs, size_batch);
+			*/
+
+			/*m_vecBestBrains[i].index_act = (conteggio_step - 1)*size_prev;
+			m_vecBestBrains[i].Update_Batch(TrainingInputs_piccoli, size_batch);
+			*/
 
 			/*if (!m_vecBestBrains[i].Update(CParams::TrainingInputs))
 			{
@@ -157,8 +217,11 @@ vector<CNeuralNet*> pBrains = m_pPop->Epoch(GetFitnessScores());
 				return false;
 			}*/
 
-			m_vecBestBrains[i].EndOfRunCalculations(CParams::TrainingInputs);
-				
+			m_vecBestBrains[i].EndOfRunCalculations_locale(CParams::TrainingInputs);
+			//m_vecBestBrains[i].EndOfRunCalculations_globale(CParams::TrainingInputs);
+
+			//fit_perc = m_vecBestBrains[i].EndOfRunCalculations_Batch(CParams::TrainingInputs, size_batch);
+			//fit_perc = m_vecBestBrains[i].EndOfRunCalculations_Batch(TrainingInputs_piccoli, size_batch);
 
 			////////////// STAMPA DELLE PRESTAZIONI NEL RELATIVO FILE ////////////////////////////
 
@@ -166,16 +229,21 @@ vector<CNeuralNet*> pBrains = m_pPop->Epoch(GetFitnessScores());
 			//stampa le attivazioni dei nodi output per ogni array di training 
 			string name_file_output = "Member_" + itos(i) + "\\Trainoutput_" + itos(m_iGenerations - 1) + ".txt";
 
-			m_vecBestBrains[i].Write_output(name_file_output, TRAIN);
+			//m_vecBestBrains[i].Write_output(name_file_output, TRAIN);
 
 			if (i == 0)
-				out0 << m_vecBestBrains[i].Fitness() << endl;
-			else if(i == 1)
+			{
+				m_vecBestBrains[i].Write_output(name_file_output, TRAIN);
+
+				out0 << m_vecBestBrains[i].Fitness() << "\t" /*<< fit_perc << "\t" */
+					<< m_vecBestBrains[i].m_dFitness_batch << "\t" << m_vecBestBrains[i].m_dFitness_batch_perc << endl;
+			}
+			/*/else if(i == 1)
 				out1 << m_vecBestBrains[i].Fitness() << endl;
 			else if(i == 2)
 				out2 << m_vecBestBrains[i].Fitness() << endl;
 			else if(i == 3)
-				out3 << m_vecBestBrains[i].Fitness() << endl;
+				out3 << m_vecBestBrains[i].Fitness() << endl;*/
 
 
 
@@ -225,10 +293,9 @@ vector<CNeuralNet*> pBrains = m_pPop->Epoch(GetFitnessScores());
 			*/
 			//ripulisce gli oggetti del brain poichè ora li applico al test set
 			m_vecBestBrains[i].Reset();
-			pBestBrains[i]->Reset_activation();
 			
 
-			m_vecBestBrains[i].Update_test();
+			m_vecBestBrains[i].Update_test(CParams::TestInputs);
 
 			/*if (!m_vecBestBrains[i].Update())
 			{
@@ -395,4 +462,98 @@ vector<float> CController::GetFitnessScores()const
 		scores[i] = (m_vecBrains[i].Fitness());
 	}
 	return scores;
+}
+
+
+
+
+bool CController::GeneraData_set(vector<char> &input)
+{
+	bool added = true;
+
+	int dim_scelta = size_batch + size_prev, pos;
+
+	if (dim_scelta > CParams::TrainingInputs.size())
+		dim_scelta = CParams::TrainingInputs.size();
+
+	/*while (indici.size() < dim_scelta)
+	{
+		pos = RandInt(0, CParams::TrainingInputs.size() - 1);
+
+		for (int i = 0; i < indici.size(); i++)
+		{
+			if (pos == indici[i])
+			{
+				added = false;
+
+				goto aggiungi;
+			}
+		}
+
+	aggiungi:
+		if (added)
+		{
+			indici.push_back(pos);
+		}
+
+		added = true;
+	}
+	*/
+
+
+	input.resize(dim_scelta);
+
+	//versione batch che aumenta
+	/*for (int i = 0; i < dim_scelta; i++)
+	{
+		input[i] = CParams::TrainingInputs[i];
+	}*/
+
+	//versione batch mobile, provvisoria bisogna mettere un controllo sulla fine del file di input 
+	//e nel caso resettare il contegio_step e ridefinire size_batch e size_prev
+	/*for (int i = 0; i < dim_scelta; i++)
+		input[i] = CParams::TrainingInputs[i + conteggio_step * dim_scelta];*/
+	
+
+	//versione batch mobile sovrapposta, provvisoria bisogna mettere un controllo sulla fine del file di input 
+	//e nel caso resettare il contegio_step e ridefinire size_batch e size_prev
+	for (int i = 0; i < dim_scelta; i++)
+		input[i] = CParams::TrainingInputs[i + conteggio_step * size_prev];
+
+
+
+	/*
+	for (int i = 0; i < indici.size(); i++)
+	{
+		for (int j = 0; j < CParams::TrainingInputs[indici[i]].size(); j++)
+		{
+			temp_input.push_back(CParams::TrainingInputs[indici[i]][j]);
+		}
+
+		for (int j = 0; j < CParams::TrainingOutputs[indici[i]].size(); j++)
+		{
+			temp_output.push_back(CParams::TrainingOutputs[indici[i]][j]);
+		}
+
+		input.push_back(temp_input); output.push_back(temp_output);
+
+		temp_input.clear(); temp_output.clear();
+	}*/
+
+
+	return true;
+}
+
+
+
+
+
+
+void CController::ResetBestFitness()
+{
+	m_dBestFitness = 0; m_pPop->SetBestEverFitness(0);
+	for (int i = 0; i < m_pPop->NumSpecies(); i++)
+	{
+		m_pPop->SetFitnessSpecies(0);
+	}
 }

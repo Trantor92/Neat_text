@@ -94,6 +94,13 @@ public:
 	bool		Update(ofstream &out0, ofstream &out1, ofstream &out2, ofstream &out3);
 
 
+	vector<char> TrainingInputs_piccoli;
+
+	bool GeneraData_set(vector<char> &input);
+	void ResetBestFitness();
+
+	int size_batch, size_prev;
+	int conteggio_step = 0;//serve per implementare la batch mobile
 
 	//-------------------------------------accessor methods
 

@@ -475,6 +475,9 @@ void CNeuralNet::DrawNet(HDC &surface, int Left, int Right, int Top, int Bottom)
   SelectObject(surface, RedBrush);
   SelectObject(surface, GetStockObject(BLACK_PEN));
 
+  string s_temp;
+  wstring s;
+
   for (int cNeuron = 0; cNeuron<m_vecpNeurons.size(); ++cNeuron)
   {
 	  int x = m_vecpNeurons[cNeuron]->iPosX;
@@ -482,6 +485,20 @@ void CNeuralNet::DrawNet(HDC &surface, int Left, int Right, int Top, int Bottom)
 
 	  //display the neuron
 	  Ellipse(surface, x - radNeuron, y - radNeuron, x + radNeuron, y + radNeuron);
+
+	  if (cNeuron < (CParams::iNumInputs + 1 + CParams::iNumOutputs))
+	  {
+		  int cNeuron_temp = cNeuron % (CParams::iNumInputs + 1);
+
+		  if (cNeuron_temp == CParams::iNumInputs)
+			  s_temp = "Bi";
+		  else
+			  s_temp = Decoding_Char(cNeuron_temp);
+		  
+		  s = s2ws(s_temp);
+
+		  TextOut(surface, x - radNeuron/2, y - radNeuron/2, s.c_str(), s.size());
+	  }
   }
   /*
 

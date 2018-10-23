@@ -37,32 +37,31 @@ void crea_cartella(char *indirizzo_cartella, string nome_cartella)
 	system(stringa);//esegue la stringa su riga di comando
 }
 
-int Softmax(vector<float> &output)//esegue il softmax di un array, modificandone i valori e restituendo la posizione
+int Softmax(vector<float> &output, float temperature)//esegue il softmax di un array, modificandone i valori e restituendo la posizione
 								  // del valore del massimo
 {
 	float sum = 0.f;
 
-	int pos_max = 0;
-	float max = output[pos_max];
-
 	for (int i = 0; i < output.size(); i++)
 	{
-		sum += exp(output[i]);
-
-		if (output[i] > max)
-		{
-			max = output[i];
-
-			pos_max = i;
-		}
+		sum += pow(exp(output[i]), 1.f/temperature);
 	}
 
-	/*for (int i = 0; i < output.size(); i++)//rinormalizza l'output
-	{
-		output[i] /= sum;
-	}*/
+	float sum_prob = 0.f;
+	//bool is_inf = true;
 
-	return pos_max;
+	float prob = RandFloat();
+
+	for (int i = 0; i < output.size(); i++)//rinormalizza l'output e fornisce il carattere di output
+	{
+		output[i] = pow(exp(output[i]), 1.f / temperature)/sum;
+		sum_prob += output[i];
+
+		if (prob < sum_prob)
+			return i;
+
+	}
+
 }
 
 float Calcola_Scarto(int pos_true, vector<float> prediction)
@@ -78,4 +77,49 @@ float Calcola_Scarto(int pos_true, vector<float> prediction)
 
 
 	return err /= prediction.size();
+}
+
+
+int Encoding_Char(char c)
+{
+	/*piccola, 32 caratteri*/
+	/*return (c >= 'a') ? (c + 6 - 'a') :
+		((c == '\n') ? 0 : ((c == ' ') ? 1 :
+		((c == '!') ? 2 : ((c == ',') ? 3 :
+			((c == '.') ? 4 :  5)))));*/
+
+	/*media, solo caratteri stampabili più '\n', 97 caratteri*/
+	//return (c == '\n') ? 0 : c - 31;
+
+	/*completa, 256 caratteri*/
+	//return (int)c + 128;
+
+	std::map<char, int>::iterator it = CParams::dictionary.find(c);
+
+	return it->second;
+
+}
+
+char Decoding_Char(int pos)
+{
+	/*piccola*/
+	/*return (pos >= 6) ? (pos - 6 + 'a') :
+		((pos == 0) ? '\n' : ((pos == 1) ? ' ' :
+		((pos == 2) ? '!' : ((pos == 3) ? ',' :
+			((pos == 4) ? '.' : '?')))));/*
+
+	/*media*/
+	//return (pos == 0) ? '\n' : pos + 31;
+
+
+	/*completa*/
+	//return (char)pos - 128;
+
+
+	std::map<char, int>::iterator it = CParams::dictionary.begin();
+
+	while (it->second != pos)
+		++it;
+
+	return it->first;
 }

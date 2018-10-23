@@ -133,8 +133,13 @@ inline wstring s2ws(const std::string& s)
 //crea una directory
 void crea_cartella(char *indirizzo_cartella, string nome_cartella);
 
-int Softmax(vector<float> &outputs);
+int Softmax(vector<float> &outputs, float temperature = 1.f);
 
 float Calcola_Scarto(int, vector<float>);
+
+
+int Encoding_Char(char c);
+
+char Decoding_Char(int pos);
 
 #endif

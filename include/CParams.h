@@ -16,6 +16,7 @@
 #include <vector>
 #include <string>
 #include <iostream>
+#include <map>
 
 #include "utils.h"
 
@@ -145,6 +146,9 @@ public:
   //dati
 
   static vector<char> TrainingInputs;
+  static vector<char> TestInputs;
+
+  static std::map<char, int> dictionary;
 
   /*static vector<vector<float>> TrainingInputs;
   static vector<vector<float>> TrainingOutputs; static vector<string> squadre_train;

@@ -31,6 +31,8 @@ Cga::Cga(int  size,
 	//tanto sono tutti strutturalmente identici	
 	m_pInnovation = new CInnovation(m_vecGenomes[0].LinkGenes(), m_vecGenomes[0].NeuronGenes());
 
+	MaxGenAllowedNoImprovement = CParams::iNumGensAllowedNoImprovement;
+
 }
 
 
@@ -57,7 +59,9 @@ vector<CNeuralNet*> Cga::CreatePhenotypes()
 {
 	vector<CNeuralNet*> networks; networks.resize(m_iPopSize);
 
-#pragma omp parallel for 
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif // DEBUG
 
 	for (int i=0; i<m_iPopSize; i++)
 	{
@@ -126,16 +130,16 @@ vector<CNeuralNet*> Cga::Epoch(const vector<float> &FitnessScores)
   //--------------------------- e sui migliori genomi ----------------------------------------
 
   //info sulle specie
-  string name = "dbg_SpeciesDump_gen" + itos(m_iGeneration) + ".txt";
-  SpeciesDump(name);//scrittura su file
+  //string name = "dbg_SpeciesDump_gen" + itos(m_iGeneration) + ".txt";
+  //SpeciesDump(name);//scrittura su file
 
   //scrittura su file della lista delle innovazioni.
   //questo file viene riscritto ad ogni generazione
   m_pInnovation->Write("dbg_Innovations.txt", m_iGeneration);
 
   //info sui 4 migliori genomi
-  name = "Member_0\\dbg_BestGenome_gen" + itos(m_iGeneration) + ".txt";
-  WriteGenome(name, 0);//scrittura su file
+  //name = "Member_0\\dbg_BestGenome_gen" + itos(m_iGeneration) + ".txt";
+  //WriteGenome(name, 0);//scrittura su file
 
   /*name = "Member_1\\dbg_BestGenome_gen" + itos(m_iGeneration) + ".txt";
   WriteGenome(name, 1);//scrittura su file
@@ -314,7 +318,9 @@ vector<CNeuralNet*> Cga::Epoch(const vector<float> &FitnessScores)
   //si creano i fenotipi dei genomi della nuova popolazione
   vector<CNeuralNet*> new_phenotypes; new_phenotypes.resize(m_vecGenomes.size());
 
+#ifdef _OPENMP
 #pragma omp parallel for
+#endif // DEBUG
 
   for (int gen=0; gen<m_vecGenomes.size(); ++gen)
   {    
@@ -925,6 +931,8 @@ vector<float> Cga::ResetAndKill(vector<float> FitnessScores)
   //--- si uccidono le specie che non migliorano e si -------------------------------
   //-------- disassociano i genomi dalle specie -------------------------------------
 
+  int Treshold_noimprovement = Calcola_MaxGenerationNoImprovement();
+
   int spc = 0;
   curSp = m_vecSpecies.begin();
   while (curSp != m_vecSpecies.end())
@@ -932,7 +940,7 @@ vector<float> Cga::ResetAndKill(vector<float> FitnessScores)
 	 
     //si uccidono le specie che sono rimaste vuote. Anche quelle che non migliorano
 	//a meno che non sia la specie milgiore
-    if ( (curSp->NumMembers()==0) || ((curSp->GensNoImprovement() >= CParams::iNumGensAllowedNoImprovement) &&
+    if ( (curSp->NumMembers()==0) || ((curSp->GensNoImprovement() >= Treshold_noimprovement) &&
          (curSp->BestFitness() < m_dBestEverFitness)) )
 	{
 
@@ -982,6 +990,22 @@ vector<float> Cga::ResetAndKill(vector<float> FitnessScores)
 
   return FitnessScores;
 }
+
+int Cga::Calcola_MaxGenerationNoImprovement()
+{
+	for (int i = 0; i < m_vecSpecies.size(); i++)
+	{
+		if (m_vecSpecies[i].BestFitness() == m_dBestEverFitness)
+		{
+			int GenNoImproBest = m_vecSpecies[i].GensNoImprovement();
+
+			return MaxGenAllowedNoImprovement = (GenNoImproBest > CParams::iNumGensAllowedNoImprovement) ?
+				((MaxGenAllowedNoImprovement < GenNoImproBest) ? GenNoImproBest : MaxGenAllowedNoImprovement) :
+				CParams::iNumGensAllowedNoImprovement;
+		}
+	}
+}
+
 
 //-------------------------- GetMemberPos ----------------------------
 //

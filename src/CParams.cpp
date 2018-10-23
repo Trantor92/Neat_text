@@ -51,6 +51,9 @@ string CParams::iNameTest;
 
 
 vector<char> CParams::TrainingInputs;
+vector<char> CParams::TestInputs;
+
+std::map<char, int> CParams::dictionary;
 
 /*vector<vector<float>> CParams::TrainingOutputs;
 vector<vector<float>> CParams::TestOutputs;
@@ -157,16 +160,44 @@ bool CParams::LoadInParameters(char* szFileName)
 
   //CParams::iNumInputs = CParams::iNumOutputs = 97;
 
-  CParams::iNumInputs = CParams::iNumOutputs = 32;
+  //CParams::iNumInputs = CParams::iNumOutputs = 32;
 
   char c;
+  int count = 0;
 
   while (!train.eof())
   {
 	  train.get(c);//le char vanno da -128 a 127 usually (256 valori)
 
 	  TrainingInputs.push_back(c);
+
+	  if (!dictionary.count(c))
+		  dictionary.insert(std::pair<char, int>(c, count++));	
   }
+
+  //non so perche ma mi prende due volte l'ultimo carattere
+  TrainingInputs.pop_back();
+
+
+  CParams::iNumInputs = CParams::iNumOutputs = dictionary.size();
+
+
+  ifstream test(iNameTest);
+
+  while (!test.eof())
+  {
+	  test.get(c);//le char vanno da -128 a 127 usually (256 valori)
+
+	  TestInputs.push_back(c);
+
+	  if (!dictionary.count(c))
+		  dictionary.insert(std::pair<char, int>(c, count++));
+  }
+
+
+  //non so perche ma mi prende due volte l'ultimo carattere
+  TestInputs.pop_back();
+
 
   /*
   int rows, n_out, n_in;

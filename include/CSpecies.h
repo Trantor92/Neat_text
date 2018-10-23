@@ -140,6 +140,9 @@ public:
   int				GensNoImprovement()const { return m_iGensNoImprovement; }
   void				GensNoImprovement(int no_improvement) { m_iGensNoImprovement = no_improvement; }
 
+
+  void	SetBestFitness(double fitness) { m_dBestFitness = fitness; }
+
 };
 
 #endif
