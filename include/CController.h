@@ -14,15 +14,20 @@
 #include <sstream>
 #include <string>
 
-#ifdef VIEWER
-#include <windows.h>
-#endif // VIEWER
+#ifdef _OPENMP
+#include <omp.h>
+#endif // DEBUG
 
 
 #include "utils.h"
 #include "CBrain.h"
 #include "CParams.h"
 #include "Cga.h"
+
+#ifdef VIEWER
+#include <windows.h>
+#endif // VIEWER
+
 
 
 using namespace std;

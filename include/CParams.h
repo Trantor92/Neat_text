@@ -13,10 +13,6 @@
 //
 //------------------------------------------------------------------------
 
-#ifdef VIEWER
-#include <windows.h>
-#endif
-
 #include <fstream>
 #include <vector>
 #include <string>
@@ -24,6 +20,10 @@
 #include <map>
 
 #include "utils.h"
+
+#ifdef VIEWER
+#include <windows.h>
+#endif
 
 using namespace std;	
 

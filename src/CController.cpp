@@ -1,8 +1,5 @@
 #include "CController.h"
 
-#ifdef _OPENMP
-#include <omp.h>
-#endif // DEBUG
 
 #ifdef VIEWER
 
@@ -661,10 +658,10 @@ void	CController::PlotStats()
 	string s_temp = "Best Fitness so far: " + ftos(m_pPop->BestEverFitness());
 	cout << s_temp << endl;
 
-	s_temp = "Generation:              " + itos(m_iGenerations);
+	s_temp = "Generation\t   : " + itos(m_iGenerations);
 	cout << s_temp << endl;
 
-	s_temp = "Num Species:          " + itos(m_pPop->NumSpecies());
+	s_temp = "Num Species\t   : " + itos(m_pPop->NumSpecies());
 	cout << s_temp << endl << endl;
 
 
@@ -675,17 +672,17 @@ void	CController::PlotStats()
 
 	if (m_iGenerations > 0)
 	{
-		s_temp = "Fitness 1: " + ftos(m_vecBestBrains[0].Fitness());
+		s_temp = "Fitness 1:      " + ftos(m_vecBestBrains[0].Fitness());
 		cout << s_temp << endl;
 
-		s_temp = "Fitness 2: " + ftos(m_vecBestBrains[1].Fitness());
+		s_temp = "Fitness 2:      " + ftos(m_vecBestBrains[1].Fitness());
 		cout << s_temp << endl;
 
-		s_temp = "Fitness 3: " + ftos(m_vecBestBrains[2].Fitness());
+		s_temp = "Fitness 3:      " + ftos(m_vecBestBrains[2].Fitness());
 		cout << s_temp << endl;
 
-		s_temp = "Fitness 4: " + ftos(m_vecBestBrains[3].Fitness());
-		cout << s_temp << endl;
+		s_temp = "Fitness 4:      " + ftos(m_vecBestBrains[3].Fitness());
+		cout << s_temp << endl << endl;
 	}
 
 }

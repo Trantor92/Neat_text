@@ -13,15 +13,15 @@
 #include <vector>
 #include <fstream>
 
-#ifdef VIEWER
-#include <windows.h>
-#endif // VIEWER
-
 
 #include "phenotype.h"
 #include "genotype.h"
 #include "CSpecies.h"
 #include "CParams.h"
+
+#ifdef VIEWER
+#include <windows.h>
+#endif // VIEWER
 
 using namespace std;
 

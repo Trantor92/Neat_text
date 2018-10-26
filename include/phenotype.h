@@ -15,16 +15,14 @@
 #include <math.h>
 #include <algorithm>
 
-#ifdef VIEWER
-#include <windows.h>
-#endif // VIEWER
-
-
-
 
 #include "utils.h"
 #include "CParams.h"
 #include "genes.h"
+
+#ifdef VIEWER
+#include <windows.h>
+#endif // VIEWER
 
 
 using namespace std;

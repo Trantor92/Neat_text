@@ -1140,14 +1140,15 @@ void Cga::RenderSpeciesInfo()
 			string s_temp = "Gens no improvement: " + itos(m_vecSpecies[spc].GensNoImprovement());
 			cout << s_temp << endl;
 			
-			s_temp = "Species Age: " + itos(m_vecSpecies[spc].Age());
+			s_temp = "Species Age        : " + itos(m_vecSpecies[spc].Age());
 			cout << s_temp << endl;
 
-			s_temp = "Best Species ID: " + itos(m_vecSpecies[spc].ID());
+			s_temp = "Best Species ID    : " + itos(m_vecSpecies[spc].ID());
 			cout << s_temp << endl;
 
-			s_temp = "Threshold: " + ftos(CParams::dCompatibilityThreshold);
+			s_temp = "Threshold          : " + ftos(CParams::dCompatibilityThreshold);
 			cout << s_temp << endl;
+			cout << "\n---------------------------------------------------\n\n";
 		}
 	}
 }

@@ -10,6 +10,10 @@
 #include <iostream>
 #include <vector>
 
+/*#ifdef _WIN32
+#define VIEWER
+#endif // _WIN32*/
+
 #ifdef VIEWER
 #include <windows.h>
 #endif // VIEWER
