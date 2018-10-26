@@ -110,7 +110,7 @@ public:
 	//crea il fenotipo a partire da genoma e ne calcola la profondità
 	CNeuralNet*	    CreatePhenotype();
 
-	CNeuralNet*		CreatePhenotype(int ID1, int ID2);//crea un fenotipo aggiungendo genoma un link fra i nodi specificati
+	//CNeuralNet*		CreatePhenotype(int ID1, int ID2);//crea un fenotipo aggiungendo genoma un link fra i nodi specificati
 	                                                  //dai numeri identificativi. controlla se questa aggiunta rende
 	                                                  //la rete ciclica.
 

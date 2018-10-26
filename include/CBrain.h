@@ -84,11 +84,15 @@ public:
 	float    EndOfRunCalculations_Batch(vector<char> Inputs, int size_batch, bool is_test = false);
 	float    EndOfRunCalculations_insideBatch(vector<char> Inputs);
 
+#ifdef VIEWER
 	//disegna il fenotipo associato al Brain
 	void      DrawNet(HDC &surface, int cxLeft, int cxRight, int cyTop, int cyBot)
 	{
 		m_pItsBrain->DrawNet(surface, cxLeft, cxRight, cyTop, cyBot);
 	}
+#endif // VIEWER
+
+
 
 	//scrive su file le Input, TrueOutput e outputs
 	bool Write_output(string name_file_output, bool is_train);

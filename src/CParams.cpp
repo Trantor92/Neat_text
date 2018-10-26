@@ -4,8 +4,15 @@
 float CParams::dPi                       = 0.f;
 float CParams::dHalfPi                   = 0.f;
 float CParams::dTwoPi                    = 0.f;
-int CParams::WindowWidth                  = GetSystemMetrics(SM_CXSCREEN) / 2;
-int CParams::WindowHeight                 = 400;
+
+#ifdef VIEWER
+int CParams::WindowWidth = GetSystemMetrics(SM_CXSCREEN) / 2;
+int CParams::WindowHeight = 400;
+int CParams::InfoWindowWidth = GetSystemMetrics(SM_CXSCREEN) / 2;
+int CParams::InfoWindowHeight = GetSystemMetrics(SM_CYSCREEN) * 0.9f;
+#endif // VIEWER
+
+
 int CParams::iNumInputs                   = 0;
 int CParams::iNumOutputs                  = 0;
 int CParams::iPopSize                     = 0;
@@ -16,8 +23,7 @@ int CParams::iNumAddLinkAttempts          = 0;
 float CParams::dYoungFitnessBonus        = 0.f;
 int CParams::iYoungBonusAgeThreshhold     = 0;
 float CParams::dSurvivalRate             = 0.f;
-int CParams::InfoWindowWidth              = GetSystemMetrics(SM_CXSCREEN) / 2;
-int CParams::InfoWindowHeight             = GetSystemMetrics(SM_CYSCREEN) * 0.9f;
+
 int CParams::iNumGensAllowedNoImprovement = 0;
 int CParams::iMaxPermittedNeurons         = 0;
 float CParams::dChanceAddLink            = 0.f;
@@ -54,6 +60,9 @@ vector<char> CParams::TrainingInputs;
 vector<char> CParams::TestInputs;
 
 std::map<char, int> CParams::dictionary;
+
+mod_type CParams::ModAddestramento = MODO_BATCH_INCREMENTALE;
+float CParams::soglia_prestazioni = 50.f;
 
 /*vector<vector<float>> CParams::TrainingOutputs;
 vector<vector<float>> CParams::TestOutputs;
@@ -179,9 +188,6 @@ bool CParams::LoadInParameters(char* szFileName)
   TrainingInputs.pop_back();
 
 
-  CParams::iNumInputs = CParams::iNumOutputs = dictionary.size();
-
-
   ifstream test(iNameTest);
 
   while (!test.eof())
@@ -198,126 +204,7 @@ bool CParams::LoadInParameters(char* szFileName)
   //non so perche ma mi prende due volte l'ultimo carattere
   TestInputs.pop_back();
 
-
-  /*
-  int rows, n_out, n_in;
-
-  float norm;
-
-  train >> rows; train >> CParams::iNumInputs; train >> CParams::iNumOutputs;
-  
-  n_in = CParams::iNumInputs; n_out = CParams::iNumOutputs;
-
-  string squadre;
- 
-  vector<float> temp; float lec;
-  for (int i = 0; i < rows; i++)
-  {
-	  train >> ParamDescription; squadre = ParamDescription; squadre += "\t";
-	  train >> ParamDescription; squadre += ParamDescription;
-
-	  squadre_train.push_back(squadre);
-	  
-	  norm = 0;
-	  for (int j = 0; j < n_in; j++)
-	  {
-		  train >> lec;
-
-		  norm += pow(lec,2.);
-
-		  temp.push_back(lec);
-		  
-	  }
-
-	  norm = pow(norm, 0.5);
-
-	  //eventuale normalizzazione
-	  if (isNorm)
-	  {
-		  for (int j = 0; j < n_in; j++)
-		  {
-			  temp[j] /= norm;
-		  }
-	  }
-
-
-	  TrainingInputs.push_back(temp); temp.clear();
-
-	  for (int j = 0; j < n_out; j++)
-	  {
-		  train >> lec;
-		  temp.push_back(lec);
-	  }
-
-	  TrainingOutputs.push_back(temp); temp.clear();
-
-  
-  }
-
-
-
-
-
-  //apertura del file del Test Set
-  ifstream test(iNameTest);
-
-  //controllo
-  if (!test)
-  {
-	  return false;
-  }
-
-
-  test >> rows; test >> n_in; test >> n_out;
-
-  if (n_in != CParams::iNumInputs || n_out != CParams::iNumOutputs)
-  {
-	  cout << "Errore: input e/o output non combaciano fra training e test." << endl;
-  }
-
- 
-  for (int i = 0; i < rows; i++)
-  {
-	  test >> ParamDescription; squadre = ParamDescription; squadre += "\t";
-	  test >> ParamDescription; squadre += ParamDescription;
-
-	  squadre_test.push_back(squadre);
-
-	  norm = 0;
-	  for (int j = 0; j < n_in; j++)
-	  {
-		  test >> lec;
-
-		  norm += pow(lec, 2.);
-
-		  temp.push_back(lec);
-
-	  }
-
-	  norm = pow(norm, 0.5);
-	  
-	  //eventuale normalizzazione
-	  if (isNorm)
-	  {
-		  for (int j = 0; j < n_in; j++)
-		  {
-			  temp[j] /= norm;
-
-		  }
-	  }
-	  
-
-	  TestInputs.push_back(temp); temp.clear();
-
-	  for (int j = 0; j < n_out; j++)
-	  {
-		  test >> lec;
-		  temp.push_back(lec);
-	  }
-
-	  TestOutputs.push_back(temp); temp.clear();
-
-  }*/
+  CParams::iNumInputs = CParams::iNumOutputs = dictionary.size();
 
   return true;
 }

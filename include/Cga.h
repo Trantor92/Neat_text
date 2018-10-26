@@ -1,5 +1,7 @@
-#ifndef CGA_H
-#define	CGA_H
+//#ifndef CGA_H
+//#define	CGA_H
+
+#pragma once
 
 //------------------------------------------------------------------------
 //
@@ -9,8 +11,12 @@
 //       
 //------------------------------------------------------------------------
 #include <vector>
-#include <windows.h>
 #include <fstream>
+
+#ifdef VIEWER
+#include <windows.h>
+#endif // VIEWER
+
 
 #include "phenotype.h"
 #include "genotype.h"
@@ -139,10 +145,13 @@ public:
 	//ritorna i fenotipi dei migliori individui in m_vecBestGenomes
 	vector<CNeuralNet*>  GetBestPhenotypesFromLastGeneration();
 
-
+#ifdef VIEWER
 	//Disegna le statistiche relative alla speciazione ed in particolare quelle
 	//renlative alla specie migliore.
 	void                 RenderSpeciesInfo(HDC &surface, RECT db);
+#else
+	void                 RenderSpeciesInfo();
+#endif // VIEWER
 
 	//questa funzione scrive su file il genoma dato l'indice che questo ha nel
 	//vector m_vecGenomes
@@ -177,4 +186,4 @@ public:
 	}
 };
 
-#endif
+//#endif

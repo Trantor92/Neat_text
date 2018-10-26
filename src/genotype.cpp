@@ -416,9 +416,14 @@ int CGenome::GetElementPos(int neuron_id)
 	}
 
 	string s_temp = itos(neuron_id);
-	wstring s = s2ws(s_temp);
 
+#ifdef VIEWER
+	wstring s = s2ws(s_temp);
 	MessageBox(NULL, L"Error in CGenome::GetElementPos", s.c_str(), MB_OK);
+#else
+	cout << s_temp << endl;
+#endif // VIEWER
+
 
 	return -1;
 }
@@ -751,9 +756,15 @@ void CGenome::AddNeuron(float       MutationRate,
     //errore: questo non dovrebbe succedere poichè deve esistere l'innovazione nella lista
     if ( (idLink1 < 0) || (idLink2 < 0) )
     {
-      MessageBox(NULL, L"Error in CGenome::AddNeuron", L"Problem!", MB_OK);
-			
-      return;
+#ifdef VIEWER
+		MessageBox(NULL, L"Error in CGenome::AddNeuron", L"Problem!", MB_OK);
+		return;
+#else
+		cout << "Error in CGenome::AddNeuron" << endl;
+		exit(0);
+#endif // VIEWER
+
+
     }
 
     //si creano i geni dei nuovi link e si aggiungono al genoma dei link
@@ -950,7 +961,7 @@ float CGenome::GetCompatibilityScore(const CGenome &genome)
 //------------------------------------------------------------------------
 void CGenome::SortGenes()
 {
-  sort (m_vecLinks.begin(), m_vecLinks.end());
+  sort(m_vecLinks.begin(), m_vecLinks.end());
 }
 
 //--------------------- CreateFromFile -----------------------------------
@@ -964,7 +975,12 @@ bool CGenome::CreateFromFile(const char* szFileName)
   //controllo
   if (!in)
   {
-    MessageBox(NULL, L"Cannot find genome file!", L"error", MB_OK);
+#ifdef VIEWER
+	  MessageBox(NULL, L"Cannot find genome file!", L"error", MB_OK);
+#else
+	  cout << "Cannot find genome file!" << endl;
+#endif // VIEWER
+
 
     return false;
   }

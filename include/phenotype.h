@@ -1,5 +1,7 @@
-#ifndef PHENOTYPE_H
-#define PHENOTYPE_H
+//#ifndef PHENOTYPE_H
+//#define PHENOTYPE_H
+
+#pragma once
 
 //-----------------------------------------------------------------------
 //
@@ -11,8 +13,14 @@
 
 #include <vector>
 #include <math.h>
-#include <windows.h>
 #include <algorithm>
+
+#ifdef VIEWER
+#include <windows.h>
+#endif // VIEWER
+
+
+
 
 #include "utils.h"
 #include "CParams.h"
@@ -145,12 +153,14 @@ public:
 
   void        Reset_activation();
 
+#ifdef VIEWER
   //Disegna il fenotipo nella surface specificata
   void            DrawNet(HDC &surface,
-                          int cxLeft,
-                          int cxRight,
-                          int cyTop,
-                          int cyBot);
+	  int cxLeft,
+	  int cxRight,
+	  int cyTop,
+	  int cyBot);
+#endif // VIEWER
 
 
 
@@ -160,4 +170,4 @@ public:
 
 };
 
-#endif
+//#endif

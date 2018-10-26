@@ -12,7 +12,7 @@
 
 #include <vector>
 #include <math.h>
-#include <iomanip>
+//#include <iomanip>
 #include <iostream>
 
 #include "genotype.h"

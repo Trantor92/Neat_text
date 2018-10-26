@@ -13,8 +13,10 @@
 #include <vector>
 #include <sstream>
 #include <string>
-#include <windows.h>
 
+#ifdef VIEWER
+#include <windows.h>
+#endif // VIEWER
 
 
 #include "utils.h"
@@ -51,8 +53,7 @@ private:
 	int					m_iGenerations;
 
 
-	
-
+#ifdef VIEWER
 	//pens utilizzate in fase di disegno grafico
 	HPEN				m_RedPen;
 	HPEN				m_BluePen;
@@ -77,21 +78,35 @@ private:
 	//stampa le informazioni generali della simulazione
 	//see CController Render()
 	void   PlotStats(HDC surface)const;
+#else
+	void PlotStats();
+#endif // VIEWER
+
 
 public:
 
+
+#ifdef VIEWER
 	CController(HWND hwndMain, int cxClient, int cyClient);
 
-	~CController();
 	
 	//stampa le informazioni generali della simulazione
 	void		Render(HDC &surface);
 
 	//disegna i fenotipi dei migliori Brains 
 	void		RenderNetworks(HDC &surface);
+#else
+	CController();
+
+	void		Render();
+#endif // VIEWER
+
+
+	~CController();
+
 
 	//esegue una generazione
-	bool		Update(ofstream &out0, ofstream &out1, ofstream &out2, ofstream &out3);
+	bool		Update(ofstream &out0/*, ofstream &out1, ofstream &out2, ofstream &out3*/);
 
 
 	vector<char> TrainingInputs_piccoli;
@@ -100,11 +115,14 @@ public:
 	void ResetBestFitness();
 
 	int size_batch, size_prev;
-	int conteggio_step = 0;//serve per implementare la batch mobile
+	int conteggio_step = -1;//serve per implementare la batch mobile
 
 	//-------------------------------------accessor methods
 
+#ifdef VIEWER
 	void            PassInfoHandle(HWND hnd) { m_hwndInfo = hnd; }
+#endif // VIEWER
+
 
 	vector<float>  GetFitnessScores()const;
 

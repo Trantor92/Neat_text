@@ -88,10 +88,17 @@ vector<CNeuralNet*> Cga::Epoch(const vector<float> &FitnessScores)
   //controllo che le dimensioni siano corrette
   if (FitnessScores.size() != m_vecGenomes.size())
   {
+	  string s_temp = "scores=" + itos(FitnessScores.size()) + "/gens=" + itos(m_vecGenomes.size());
 
-    string s_temp = "scores="+itos(FitnessScores.size())+"/gens="+itos(m_vecGenomes.size());
-	wstring s = s2ws(s_temp);
-    MessageBox(NULL, s.c_str(), L"Error", MB_OK);
+#ifdef VIEWER
+	  wstring s = s2ws(s_temp);
+	  MessageBox(NULL, s.c_str(), L"Error", MB_OK);
+#else
+	  cout << s_temp << endl;
+	  exit(0);
+#endif // VIEWER
+
+    
   }
 
 
@@ -608,7 +615,7 @@ void Cga::AdjustCompatibilityThreshold()
   }
 
   //poche specie, abbasso la soglia
-  else if (m_vecSpecies.size() < 2)
+  else if (m_vecSpecies.size() <= (CParams::iMaxNumberOfSpecies/3 + 1))
   {
     CParams::dCompatibilityThreshold -= ThresholdIncrement;
   }
@@ -1025,12 +1032,19 @@ int	Cga::GetMemberPos(int ID)
 	}
 
 	string s_temp = itos(ID);
-	wstring s = s2ws(s_temp);
 
+#ifdef VIEWER
+	wstring s = s2ws(s_temp);
 	MessageBox(NULL, L"Error in CGa::GetMemberPos", s.c_str(), MB_OK);
+#else
+	cout << s_temp << endl;
+#endif // VIEWER
+
 
 	return -1;
 }
+
+#ifdef VIEWER
 
 //--------------------------- RenderSpeciesInfo --------------------------
 //
@@ -1108,6 +1122,36 @@ void Cga::RenderSpeciesInfo(HDC &surface, RECT db)
   wstring s = s2ws(s_temp);
   TextOut(surface, 5, db.top - 20, s.c_str(), s.size());
 }
+#else
+void Cga::RenderSpeciesInfo() 
+{
+	//se non c'è ancora nessuna specie (generazione 0) allora non si disegna nulla
+	if (m_vecSpecies.size() < 1) return;
+
+	//ora si disegnano rettagoli, di larghezza proporzionale al numero di membri della specie e di diverso colore,
+	//per ogni specie presente
+	for (int spc = 0; spc<m_vecSpecies.size(); ++spc)
+	{
+
+
+		//scrittura sulla finestra delle caratteristiche della specie migliore
+		if (m_vecSpecies[spc].BestFitness() == m_dBestEverFitness)
+		{
+			string s_temp = "Gens no improvement: " + itos(m_vecSpecies[spc].GensNoImprovement());
+			cout << s_temp << endl;
+			
+			s_temp = "Species Age: " + itos(m_vecSpecies[spc].Age());
+			cout << s_temp << endl;
+
+			s_temp = "Best Species ID: " + itos(m_vecSpecies[spc].ID());
+			cout << s_temp << endl;
+
+			s_temp = "Threshold: " + ftos(CParams::dCompatibilityThreshold);
+			cout << s_temp << endl;
+		}
+	}
+}
+#endif // VIEWER
 
 
 //--------------------------- WriteGenome --------------------------------

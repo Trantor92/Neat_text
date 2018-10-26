@@ -15,29 +15,6 @@ CBrain::~CBrain()
 	;
 }
 
-//-------------------------------Update()--------------------------------
-//
-//outputs deve avere size nulla poichè si utilizza il push_back, ciò viene fatto in Reset.
-//carica in outputs i valori di attivazione dei nodi output, per ogni evento caricato in Input
-//-----------------------------------------------------------------------
-/*bool CBrain::Update(vector<vector<float>> Inputs)
-{
-
-	if (GetPhenotype()->GetDepth() != -1)//profondità -1 è il valore di errore per dire che la rete è aciclica
-	{
-		for (int i_example = 0; i_example < Inputs.size(); i_example++)
-		{
-			outputs.push_back(m_pItsBrain->Update(Inputs[i_example], CNeuralNet::snapshot));
-		}
-	}
-	else
-	{//qualcosa è andato storto ed è arrivata fino a qui una rete aciclica
-		MessageBox(NULL, L"Error in Update a Brain, la rete è ciclica", L"ERROR", MB_OK);
-	}
-
-	return true;
-}*/
-
 
 bool CBrain::Update(vector<char> Inputs)
 {//questa funzione non va bene bisogna correggerla e forse anche il endofruncalculation relativo

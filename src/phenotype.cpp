@@ -260,7 +260,7 @@ void TidyXSplits(vector<SNeuron*> &neurons)
 
 }
 
-
+#ifdef VIEWER
 //----------------------------- DrawNet ----------------------------------
 //
 //  crea la rappresentazione grafica della rete neurale sulla surface
@@ -564,6 +564,7 @@ void CNeuralNet::DrawNet(HDC &surface, int Left, int Right, int Top, int Bottom)
   DeleteObject(OldBrush);
 }
 
+#endif // VIEWER
 
 
 

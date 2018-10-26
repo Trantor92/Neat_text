@@ -1,5 +1,7 @@
-#ifndef CPARAMS_H
-#define CPARAMS_H
+//#ifndef CPARAMS_H
+//#define CPARAMS_H
+
+#pragma once
 
 //------------------------------------------------------------------------
 //
@@ -11,7 +13,10 @@
 //
 //------------------------------------------------------------------------
 
+#ifdef VIEWER
 #include <windows.h>
+#endif
+
 #include <fstream>
 #include <vector>
 #include <string>
@@ -22,6 +27,8 @@
 
 using namespace std;	
 
+
+enum mod_type { MODO_LOCALE, MODO_GLOBALE, MODO_BATCH, MODO_BATCH_INCREMENTALE, MODO_BATCH_MOBILE };
 
 
 class CParams
@@ -39,11 +46,14 @@ public:
   static float dHalfPi;
   static float dTwoPi;
 
+#ifdef VIEWER
   static int    WindowWidth;
   static int    WindowHeight;
 
   static int    InfoWindowWidth;
   static int    InfoWindowHeight;
+#endif // VIEWER
+
 
 
   //----------------------------------------------------------------------
@@ -150,6 +160,11 @@ public:
 
   static std::map<char, int> dictionary;
 
+  //modalità di addestramento
+  static mod_type ModAddestramento;
+  
+  static float soglia_prestazioni;
+
   /*static vector<vector<float>> TrainingInputs;
   static vector<vector<float>> TrainingOutputs; static vector<string> squadre_train;
   static vector<vector<float>> TestInputs;
@@ -167,7 +182,11 @@ public:
   {
     if(!LoadInParameters((char*)"params.ini"))
     {
-      MessageBox(NULL, L"Cannot find 'params.ini'", L"Error", 0);
+#ifdef VIEWER
+		MessageBox(NULL, L"Cannot find 'params.ini'", L"Error", 0);
+#else
+		cout << "Cannot find 'params.ini'" << endl;
+#endif // VIEWER
 
       return false;
     }
@@ -186,4 +205,4 @@ public:
   bool LoadInParameters(char* szFileName);
 };
 
-#endif
+//#endif

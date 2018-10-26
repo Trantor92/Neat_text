@@ -1,5 +1,7 @@
-#ifndef UTILS_H
-#define UTILS_H
+//#ifndef UTILS_H
+//#define UTILS_H
+
+#pragma once
 
 #include <stdlib.h>
 #include <math.h>
@@ -7,7 +9,11 @@
 #include <string>
 #include <iostream>
 #include <vector>
+
+#ifdef VIEWER
 #include <windows.h>
+#endif // VIEWER
+
 
 using namespace std;
 
@@ -116,7 +122,7 @@ inline int Rounded(float val)
   }
 }
 
-
+#ifdef VIEWER
 //conversione fromati stringa
 inline wstring s2ws(const std::string& s)
 {
@@ -129,6 +135,7 @@ inline wstring s2ws(const std::string& s)
 	delete[] buf;
 	return r;
 }
+#endif //VIEWER
 
 //crea una directory
 void crea_cartella(char *indirizzo_cartella, string nome_cartella);
@@ -142,4 +149,4 @@ int Encoding_Char(char c);
 
 char Decoding_Char(int pos);
 
-#endif
+//#endif
