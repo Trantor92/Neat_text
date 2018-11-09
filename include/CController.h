@@ -29,7 +29,6 @@
 #endif // VIEWER
 
 
-
 using namespace std;
 
 
@@ -113,6 +112,7 @@ public:
 	//esegue una generazione
 	bool		Update(ofstream &out0/*, ofstream &out1, ofstream &out2, ofstream &out3*/);
 
+	void Testing_Networks();
 
 	vector<char> TrainingInputs_piccoli;
 

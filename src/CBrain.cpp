@@ -88,9 +88,10 @@ bool CBrain::Update(vector<char> Inputs)
 		input[pos_hot] = 0.f;
 
 		pos_hot = std::distance(outputs[c].begin(), max_element(outputs[c].begin(), outputs[c].end()));
-		input[pos_hot] = 1.f;//metto in input nel prossimo turno la previsione del turno corrente
+		//input[pos_hot] = 1.f;//metto in input nel prossimo turno la previsione del turno corrente
 		output_char[c+1] = Decoding_Char(pos_hot);
-		input[pos_hot] = 0.f;
+
+		//input[pos_hot] = 0.f;
 
 
 		//solo con versione globale
@@ -136,7 +137,7 @@ bool CBrain::Update_Batch(vector<char> Inputs, int size_batch)
 
 		outputs[count] = Update_insidebatch(input_batch);
 
-		m_dFitness_batch += EndOfRunCalculations_insideBatch(input_batch);
+		//m_dFitness_batch += EndOfRunCalculations_insideBatch(input_batch);
 
 		m_pItsBrain->Reset_activation();//pone a zero le attivazioni dei nodi
 
@@ -147,8 +148,8 @@ bool CBrain::Update_Batch(vector<char> Inputs, int size_batch)
 		++count;
 	}
 
-	m_dFitness_batch /= count;
-	m_dFitness_batch_perc /= count;
+	//m_dFitness_batch /= count;
+	//m_dFitness_batch_perc /= count;
 
 	return true;
 }
@@ -158,14 +159,14 @@ vector<float> CBrain::Update_insidebatch(vector<char> Inputs)
 
 	vector<float> input; input.resize(CParams::iNumInputs, 0.f);
 
-	Update_until(index_act);//porta le attivazioni al punto descritto da index act 
+	//Update_until(index_act);//porta le attivazioni al punto descritto da index act 
 
 	/*output_char.resize(Inputs.size());
 	output_char[0] = (Inputs[0]);*/
 
 	vector<float> last_output;
 
-	outputs_batch.resize(Inputs.size());
+	//outputs_batch.resize(Inputs.size());
 
 	float error, w_postc;
 	bool is_wrong = false;
@@ -179,13 +180,13 @@ vector<float> CBrain::Update_insidebatch(vector<char> Inputs)
 		//ho il vector di input codificato one-hot
 		last_output = (m_pItsBrain->Update(input, CNeuralNet::active));
 
-		outputs_batch[c] = last_output;
+		//outputs_batch[c] = last_output;
 
 		//solo con versione globale
 		input[pos_hot] = 0.f;
 	}
 
-	outputs_batch.pop_back();
+	//outputs_batch.pop_back();
 
 	return last_output;
 }
@@ -295,7 +296,7 @@ float CBrain::EndOfRunCalculations_insideBatch(vector<char> True_Outputs)
 	return 100 * ((1.f / 2.f)*sum_perc + (1.f / 2.f)*(1.f - sum));
 }
 
-bool CBrain::Update_test(vector<char> TestInputs)
+bool CBrain::Update_test(vector<char> TestInputs, float temperature)
 {
 
 	vector<float> input; input.resize(CParams::iNumInputs, 0.f);
@@ -304,7 +305,7 @@ bool CBrain::Update_test(vector<char> TestInputs)
 
 	//ENCODING DEI CHAR inizializzanti
 	int size_test = TestInputs.size();
-	int size_prev = CParams::TrainingInputs.size();
+	int size_prev = 300;//CParams::TrainingInputs.size();
 
 	output_char.resize(size_test + size_prev);
 
@@ -325,7 +326,7 @@ bool CBrain::Update_test(vector<char> TestInputs)
 	
 	//output_char[0] = (Inputs[0]);
 
-	float temperature = 0.2f;
+	//float temperature = 0.2f;
 
 	pos_hot = Softmax(output_seed, temperature);//volendo bisognerebbe generare il carattere in modo casuale con probabilita
 	//data dal softmax
@@ -398,6 +399,8 @@ float CBrain::EndOfRunCalculations_locale(vector<char> Inputs, bool is_test)
 {
 	m_dFitness = 0.f;//importante per il calcolo della fitness
 
+	float sum, sum_perc;
+	sum = sum_perc = 0.f;
 
 	float error, w_postc;
 	bool is_wrong = false;
@@ -411,6 +414,9 @@ float CBrain::EndOfRunCalculations_locale(vector<char> Inputs, bool is_test)
 		{
 			m_dFitness += 1.f;//modalità di ottimizzazione solo dell'ultimo char
 
+			sum += (1.f - error);
+			sum_perc++;
+
 			w_postc = 0.05f / (c - Inputs.size() + 1);
 		}
 
@@ -418,6 +424,8 @@ float CBrain::EndOfRunCalculations_locale(vector<char> Inputs, bool is_test)
 		if ((!is_wrong) && (output_char[c] != Inputs[c]))
 		{
 			is_wrong = true;
+
+			sum += (1.f - error);
 
 			m_dFitness -= error;//modalità di ottimizzazione solo dell'ultimo char
 		}
@@ -429,7 +437,10 @@ float CBrain::EndOfRunCalculations_locale(vector<char> Inputs, bool is_test)
 		*/
 	}
 
-	return m_dFitness;
+	m_dFitness = sum;
+
+	//return m_dFitness;
+	return m_dFitness_test = sum_perc;
 }
 
 float CBrain::EndOfRunCalculations_globale(vector<char> Inputs, bool is_test)
@@ -441,7 +452,7 @@ float CBrain::EndOfRunCalculations_globale(vector<char> Inputs, bool is_test)
 	bool is_wrong = false;
 
 	int group = 1;
-
+/*
 	for (int c = 1; c < Inputs.size(); c++)//per tutti caratteri nel testo di training
 	{
 		error = Calcola_Scarto(Encoding_Char(Inputs[c]), outputs[c - 1]);
@@ -476,9 +487,56 @@ float CBrain::EndOfRunCalculations_globale(vector<char> Inputs, bool is_test)
 
 		++group;
 
+	}*/
+
+	error = 0.f;
+	float sum_perc = 0.f;
+	int pos_hot;
+
+	for (int c = 1; c < Inputs.size(); c++)//per tutti caratteri nel testo di training
+	{
+		pos_hot = Encoding_Char(Inputs[c]);
+
+		error += Calcola_Scarto(pos_hot, outputs[c - 1]);
+
+		//mettendo qui c invece che c-1 si ottiene un risultato incredibile
+
+		/*sum_perc += (pos_hot == std::distance(outputs[c-1].begin(),
+			max_element(outputs[c-1].begin(), outputs[c-1].end()))) ? 1.f : 0.f;*/
+			
+		/*sum_perc += (pos_hot == std::distance(outputs[c].begin(),
+			max_element(outputs[c].begin(), outputs[c].end()))) ? 1.f : 0.f;*/
+
+		sum_perc += (Inputs[c] == output_char[c]) ? 1.f : 0.f;
 	}
 
-	return m_dFitness;
+	error /= (Inputs.size() - 1);
+	sum_perc /= (Inputs.size() - 1);
+
+	//Fitness
+	float w_perc = 1.f / 2.f;//(1.f - sum_perc)*0.8f + 0.1f;//1.f / 2.f;
+	m_dFitness = 100.f *(w_perc*sum_perc + (1.f - w_perc)*(1.f - error));
+	//m_dFitness = 100.f * 0.5f * (sum_perc - error + 1.f);
+
+	return m_dFitness_perc = 100.f*sum_perc;
+
+	//error = 0;
+
+	/*m_dFitness = 0;
+
+	for (int c = 1; c < Inputs.size(); c++)//per tutti caratteri nel testo di training
+	{
+		error = Calcola_Scarto(Encoding_Char(Inputs[c]), outputs[c - 1]);
+
+		m_dFitness += (output_char[c] == Inputs[c]) ? 1.f : (1.f - error);
+	}
+
+	//error /= (Inputs.size() - 1);
+	//sum_perc /= (Inputs.size() - 1);
+
+	//m_dFitness = 100.f * 0.5f * (sum_perc - error + 1.f);*/
+
+	//return m_dFitness;
 }
 
 float CBrain::EndOfRunCalculations_Batch(vector<char> True_Outputs, int size_batch, bool is_test)
@@ -486,8 +544,11 @@ float CBrain::EndOfRunCalculations_Batch(vector<char> True_Outputs, int size_bat
 	float sum, sum_perc;
 	vector<float> true_outputs, vec_sum;
 
-	sum = sum_perc = 0.f; vec_sum.resize(CParams::iNumOutputs, 0.f);
+	sum = sum_perc = 0.f; 
+	
+	/*vec_sum.resize(CParams::iNumOutputs, 0.f);
 	true_outputs.resize(CParams::iNumOutputs, 0.f);
+	*/
 
 	int pos_hot;
 
@@ -496,44 +557,62 @@ float CBrain::EndOfRunCalculations_Batch(vector<char> True_Outputs, int size_bat
 	for (int i_row = 0; i_row < outputs.size(); i_row++)
 	{
 		pos_hot = Encoding_Char(True_Outputs[i_row + size_batch]);
-		true_outputs[pos_hot] = 1.f;
+		//true_outputs[pos_hot] = 1.f;
 
-		//calcolo della componente in sigma, sul numero di output
+	/*	//calcolo della componente in sigma, sul numero di output
 		for (int i_col = 0; i_col < outputs[i_row].size(); i_col++)
 		{
 			vec_sum[i_col] += pow(outputs[i_row][i_col] - true_outputs[i_col], 2.f);
 		}
 
 		true_outputs[pos_hot] = 0.f;
-		
+		*/
 
 		//calcolo se la ha presa
 		sum_perc += (pos_hot == std::distance(outputs[i_row].begin(),
 			max_element(outputs[i_row].begin(), outputs[i_row].end()))) ? 1.f : 0.f;
 
+		sum += Calcola_Scarto(pos_hot, outputs[i_row]);
+
 	}
 
+	/*
 	//calcolo della sigma2 media
 	for (int i = 0; i < vec_sum.size(); i++)
 	{
+		//lo tolgo solo nella prova con fitness che icnrementa
 		vec_sum[i] /= outputs.size();//e ottengo le sigma di ogni output
 
-		sum += vec_sum[i];
+		//lo tolgo solo nella prova con fitness che icnrementa
+		//sum += vec_sum[i];
 
 		mean_sqe[i] = vec_sum[i];
 	}
 
-	sum /= CParams::iNumOutputs; //ottenfo la sigma media sugli output
+	*/
 
 
-	//Rate%
+	//lo tolgo solo nella prova con fitness che icnrementa
+	//sum /= CParams::iNumOutputs; //ottenfo la sigma media sugli output
+
+	sum /= outputs.size();
+
+	//Rate%//lo tolgo solo nella prova con fitness che icnrementa
 	sum_perc /= outputs.size();
 
 	//Fitness
-	m_dFitness = 100 * ((1.f / 2.f)*sum_perc + (1.f / 2.f)*(1.f - sum));
+	float w_perc = 1.f / 2.f; //1.f - sum_perc;//1.f / 2.f;
+	m_dFitness = 100.f *(w_perc*sum_perc + (1.f - w_perc)*(1.f - sum));
+	//m_dFitness = 100.f * 0.5f * (sum_perc - sum + 1.f);
 
-	m_dFitness = (size_prev /(float)(size_batch + size_prev))*m_dFitness + 
-		(size_batch / (float)(size_batch + size_prev))*m_dFitness_batch;
+	//Fitness che si incrementa
+	//m_dFitness = (sum_perc + sum)/2;
+
+
+	/*m_dFitness = (size_prev /(float)(size_batch + size_prev))*m_dFitness + 
+		(size_batch / (float)(size_batch + size_prev))*m_dFitness_batch;*/
+
+
 
 	/*if (!is_test)//Training Set
 	{
@@ -544,7 +623,10 @@ float CBrain::EndOfRunCalculations_Batch(vector<char> True_Outputs, int size_bat
 		m_dFitness_test = result;
 	}*/
 
+
 	return m_dFitness_perc = 100.f * sum_perc;
+
+	//return m_dFitness_perc = 100.f * sum_perc / outputs.size();
 }
 
 
@@ -585,5 +667,15 @@ bool CBrain::Write_output(string name_file_output, bool is_train)
 				: out << output_char[row]);
 	}
 
+
+	/*if (!is_train)
+	{
+		for (int row = 0; row < output_char.size(); row++)
+		{
+			(row == CParams::TestInputs.size()) ? cout << "\n------------------\n" << output_char[row]
+				: cout << output_char[row];
+		}
+		cout << endl << endl << endl;
+	}*/
 	return true;
 }

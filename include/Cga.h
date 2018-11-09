@@ -165,6 +165,8 @@ public:
 			m_vecBestGenomes[i].DeletePhenotype();//DestroyPhenotype();
 	}
 
+	bool is_improved = false;
+	int count_improving = 0;
   
 	//-------------------- accessor methods ----------------------------------------
 	int					Generation() { return m_iGeneration; }
@@ -184,6 +186,8 @@ public:
 			m_vecSpecies[i].SetBestFitness(0);
 		}
 	}
+
+	void Set_is_improved(bool is) { is_improved = is; }
 };
 
 //#endif

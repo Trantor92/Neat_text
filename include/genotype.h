@@ -159,7 +159,7 @@ public:
 	bool			Write(ostream &file);
 
 	//crea un genoma CGenome da file
-	bool			CreateFromFile(const char* szFileName);
+	bool			CreateFromFile(string szFileName);
 
 	//overload '<' usato per ordinare i genomi, da quello a più alta fitness a quello a più bassa.
 	friend bool operator<(const CGenome& lhs, const CGenome& rhs)

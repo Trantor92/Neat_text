@@ -60,9 +60,10 @@ vector<char> CParams::TrainingInputs;
 vector<char> CParams::TestInputs;
 
 std::map<char, int> CParams::dictionary;
+std::map<int, int> CParams::elenco_best;
 
-mod_type CParams::ModAddestramento = MODO_BATCH_INCREMENTALE;
-float CParams::soglia_prestazioni = 50.f;
+mod_type CParams::ModAddestramento = MODO_GLOBALE;
+float CParams::soglia_prestazioni = 35.f;
 
 /*vector<vector<float>> CParams::TrainingOutputs;
 vector<vector<float>> CParams::TestOutputs;

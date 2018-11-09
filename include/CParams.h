@@ -159,6 +159,7 @@ public:
   static vector<char> TestInputs;
 
   static std::map<char, int> dictionary;
+  static std::map<int, int> elenco_best;
 
   //modalità di addestramento
   static mod_type ModAddestramento;

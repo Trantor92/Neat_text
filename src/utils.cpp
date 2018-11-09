@@ -61,20 +61,27 @@ int Softmax(vector<float> &output, float temperature)//esegue il softmax di un a
 			return i;
 
 	}
-
 }
 
 float Calcola_Scarto(int pos_true, vector<float> prediction)
 {
 	float err=0.f;
 
+	/*if (CParams::ModAddestramento == MODO_BATCH || CParams::ModAddestramento == MODO_GLOBALE)
+	{
+		for (int i = 0; i < prediction.size(); ++i)
+			err += (i == pos_true) ? pow(1 - prediction[i], 2) : pow(prediction[i], 2);
+	}
+	else
+	{
+		for (int i = 0; i < prediction.size(); ++i)
+			err += (i == pos_true) ? fabs(1 - prediction[i]) : fabs(prediction[i]);
+
+	}
+	*/
 	for (int i = 0; i < prediction.size(); ++i)
-		err += (i == pos_true) ? fabs(1 - prediction[i]) : fabs(prediction[i]);
-
-
-	/*for (int i = 0; i < prediction.size(); ++i)
-		err += (i == pos_true) ? pow(1 - prediction[i], 2) : pow(prediction[i],2);*/
-
+		err += (i == pos_true) ? pow(1 - prediction[i], 2) : pow(prediction[i], 2);
+		
 
 	return err /= prediction.size();
 }

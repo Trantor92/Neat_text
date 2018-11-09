@@ -82,7 +82,7 @@ CController::CController()
 		m_vecBestBrains[i] = (CBrain());
 	}
 
-	size_batch = 0;
+	size_batch = size_prev = 0;
 
 	//creazione della popolazione a cui applicare l'algoritmo genetico, associata ai Brains
 	m_pPop = new Cga(CParams::iPopSize,
@@ -141,19 +141,20 @@ bool CController::Update(ofstream &out0/*, ofstream &out1, ofstream &out2, ofstr
 	{
 		if (CParams::ModAddestramento == MODO_BATCH)
 		{
-			size_batch = 100;
+			size_batch = CParams::TrainingInputs.size() * 0.9f;
 			size_prev = CParams::TrainingInputs.size() - size_batch;
 		}
-		else if((m_vecBestBrains[0].Fitness() >= CParams::soglia_prestazioni) || (m_iGenerations == 0))//condizione che fa cambiare il problema
+		else if((m_vecBestBrains[0].m_dFitness_perc >= CParams::soglia_prestazioni) /*(m_vecBestBrains[0].Fitness() >= CParams::soglia_prestazioni)*/ || (m_iGenerations == 0))//condizione che fa cambiare il problema
 		{
-			size_prev = 10;
+			//lo tolgo nella versione che incrementa
+			//size_prev = 10;
 			/*bisogna gestire la fine file, eventualmente ripartire da capo*/
 			if (CParams::ModAddestramento == MODO_BATCH_INCREMENTALE)
 			{
 				conteggio_step = 0;
 
 				//versione combo standard col batch che aumenta
-				if ((size_batch + 2*size_prev) <= CParams::TrainingInputs.size())
+				/*if ((size_batch + 2*size_prev) <= CParams::TrainingInputs.size())
 					size_batch += size_prev;
 				else if ((size_batch + size_prev) < CParams::TrainingInputs.size())
 					size_batch = CParams::TrainingInputs.size() - size_prev;
@@ -161,7 +162,24 @@ bool CController::Update(ofstream &out0/*, ofstream &out1, ofstream &out2, ofstr
 				{
 					size_batch = size_prev;
 					CParams::soglia_prestazioni += 5.f;
+				}*/
+
+
+				size_batch = 10;
+				//versione combo standard col batch che aumenta
+				if ((2*size_batch + size_prev) <= CParams::TrainingInputs.size())
+					size_prev += size_batch;
+				else if ((size_batch + size_prev) < CParams::TrainingInputs.size())
+					size_prev = CParams::TrainingInputs.size() - size_batch;
+				else
+				{
+					size_batch = size_prev;
+					CParams::soglia_prestazioni += 5.f;
+
+					//lo metto nella versione che incrementa
+					ResetBestFitness();
 				}
+
 
 
 			}
@@ -189,7 +207,8 @@ bool CController::Update(ofstream &out0/*, ofstream &out1, ofstream &out2, ofstr
 			TrainingInputs_piccoli.clear();
 			GeneraData_set(TrainingInputs_piccoli);
 
-			ResetBestFitness();
+			//lo tolgo nella versione che incrementa
+			//ResetBestFitness();
 		}
 	}
 
@@ -316,22 +335,25 @@ bool CController::Update(ofstream &out0/*, ofstream &out1, ofstream &out2, ofstr
 
 			for (int i = 0; i<m_vecBestBrains.size(); ++i)
 			{
+				float fit_perc;//prestazioni in termini di Rate%
+
 				m_vecBestBrains[i].SetBrain(pBestBrains[i]);
 
 				m_vecBestBrains[i].Update(CParams::TrainingInputs);
-				m_vecBestBrains[i].EndOfRunCalculations_locale(CParams::TrainingInputs);
+				fit_perc = m_vecBestBrains[i].EndOfRunCalculations_locale(CParams::TrainingInputs);
 
 
 				//stampa le attivazioni dei nodi output per ogni array di training 
 				string name_file_output = "Member_" + itos(i) + "\\Trainoutput_" + itos(m_iGenerations - 1) + ".txt";
 				if (i == 0)
 				{
-					m_vecBestBrains[i].Write_output(name_file_output, TRAIN);
+					if (m_pPop->is_improved)
+						m_vecBestBrains[i].Write_output(name_file_output, TRAIN);
 
-					out0 << m_vecBestBrains[i].Fitness() <<  endl;
+					out0 << m_vecBestBrains[i].Fitness() << "\t" << fit_perc << "\t" << endl;
 				}
 				
-
+				/*
 				//---------- TEST -------------------
 				m_vecBestBrains[i].Reset();
 
@@ -343,8 +365,15 @@ bool CController::Update(ofstream &out0/*, ofstream &out1, ofstream &out2, ofstr
 
 					m_vecBestBrains[i].Write_output(name_file_output, TEST);
 				}
+				*/
 
 				m_vecBestBrains[i].Reset();
+			}
+
+			if (m_pPop->is_improved)
+			{
+				Testing_Networks();
+				m_pPop->Set_is_improved(false);
 			}
 
 			break;
@@ -357,22 +386,28 @@ bool CController::Update(ofstream &out0/*, ofstream &out1, ofstream &out2, ofstr
 
 			for (int i = 0; i<m_vecBestBrains.size(); ++i)
 			{
+				float fit_perc;//prestazioni in termini di Rate%
+
 				m_vecBestBrains[i].SetBrain(pBestBrains[i]);
 
 				m_vecBestBrains[i].Update(CParams::TrainingInputs);
-				m_vecBestBrains[i].EndOfRunCalculations_globale(CParams::TrainingInputs);
+				fit_perc = m_vecBestBrains[i].EndOfRunCalculations_globale(CParams::TrainingInputs);
 
 
 				//stampa le attivazioni dei nodi output per ogni array di training 
 				string name_file_output = "Member_" + itos(i) + "\\Trainoutput_" + itos(m_iGenerations - 1) + ".txt";
 				if (i == 0)
 				{
-					m_vecBestBrains[i].Write_output(name_file_output, TRAIN);
+					if (m_pPop->is_improved)
+						m_vecBestBrains[i].Write_output(name_file_output, TRAIN);
 
-					out0 << m_vecBestBrains[i].Fitness() << endl;
+					out0 << m_vecBestBrains[i].Fitness() <<"\t"<< fit_perc << "\t" << endl;
 				}
 
 
+				m_vecBestBrains[i].Reset();
+
+				/*
 				//---------- TEST -------------------
 				m_vecBestBrains[i].Reset();
 
@@ -384,10 +419,16 @@ bool CController::Update(ofstream &out0/*, ofstream &out1, ofstream &out2, ofstr
 
 					m_vecBestBrains[i].Write_output(name_file_output, TEST);
 				}
-
-				m_vecBestBrains[i].Reset();
+				*/
+				
+				//m_vecBestBrains[i].Reset();
 			}
 
+			if (m_pPop->is_improved)
+			{
+				Testing_Networks();
+				m_pPop->Set_is_improved(false);
+			}
 			break;
 		}
 		case MODO_BATCH:
@@ -412,13 +453,14 @@ bool CController::Update(ofstream &out0/*, ofstream &out1, ofstream &out2, ofstr
 				string name_file_output = "Member_" + itos(i) + "\\Trainoutput_" + itos(m_iGenerations - 1) + ".txt";
 				if (i == 0)
 				{
-					m_vecBestBrains[i].Write_output(name_file_output, TRAIN);
+					if (m_pPop->is_improved)
+						m_vecBestBrains[i].Write_output(name_file_output, TRAIN);
 
 					out0 << m_vecBestBrains[i].Fitness() << "\t" << fit_perc << "\t" 
 						<< m_vecBestBrains[i].m_dFitness_batch << "\t" << m_vecBestBrains[i].m_dFitness_batch_perc << endl;
 				}
 
-
+				/*
 				//---------- TEST -------------------
 				m_vecBestBrains[i].Reset();
 
@@ -430,8 +472,15 @@ bool CController::Update(ofstream &out0/*, ofstream &out1, ofstream &out2, ofstr
 
 					m_vecBestBrains[i].Write_output(name_file_output, TEST);
 				}
-
+				*/
 				m_vecBestBrains[i].Reset();
+
+			}
+
+			if (m_pPop->is_improved)
+			{
+				Testing_Networks();
+				m_pPop->Set_is_improved(false);
 			}
 
 			break;
@@ -795,4 +844,90 @@ void CController::ResetBestFitness()
 	{
 		m_pPop->SetFitnessSpecies(0);
 	}
+}
+
+
+void CController::Testing_Networks()
+{
+	bool is_Done = false;
+	int count;
+
+	CBrain tested_brain;
+	CGenome tested_genome;
+
+	vector<float> testing_temperature(5);// [] = { 1.f, 0.6f, 0.2f, };
+	testing_temperature[0] = 1.f;
+	testing_temperature[1] = 0.6f;
+	testing_temperature[2] = 0.2f;
+	testing_temperature[3] = 0.1f;
+	testing_temperature[4] = 0.05f;
+
+
+
+	// creazione delle directory che conterranno i file riguardanti i migliori 4 individui
+	char percorso[] = "Member_0\\";
+	string cartella;
+
+	for (int i = 0; i < 1/*4*/; i++)
+	{
+		cartella = "Test";
+
+		crea_cartella(percorso, cartella);
+	}
+
+	string name_genome;
+
+	int gen_scelta;
+
+	while(!is_Done)
+	{
+		/*cout << "Digitare -1 per uscire,\nO inserire la generazione dell'individuo da testare [0, " + itos(m_iGenerations-1) + "]: ";
+		cin >> gen_scelta;
+		
+		if (gen_scelta == -1)
+		{
+			is_Done = true;
+			break;
+		}*/
+
+		gen_scelta = m_iGenerations-1;
+
+		//chiedere all'utente l'individuo scelto (numero di generazione)
+		name_genome = "Member_0\\dbg_BestGenome_gen" + itos(gen_scelta) + ".txt";
+		
+		//generare il brains con associato il genoma letto da file
+		tested_genome.CreateFromFile(name_genome);
+		tested_brain.SetBrain(tested_genome.CreatePhenotype());
+
+		/*cout << "inserire il numero di volte che si vuole testare sweeppando in temperatura: ";
+		cin >> count; cout << endl << endl;
+		*/
+
+		count = 3;
+
+		while (count--)
+		{
+			for (int i = 0; i < testing_temperature.size(); i++)
+			{
+				float temperature = testing_temperature[i];
+
+				tested_brain.Update_test(CParams::TestInputs, temperature);
+				tested_brain.Reset();
+
+				string name_file_output = percorso + cartella + "\\Testoutput_" + itos(gen_scelta) + "_T" + ftos(temperature) + "_iter"
+					+ itos(count) + ".txt";
+
+				tested_brain.Write_output(name_file_output, TEST);
+
+			}
+		}
+
+		tested_genome.DeletePhenotype();
+
+		break;
+
+//skip:
+
+	}
+	//generare il file di test associato variando la temperatura
 }

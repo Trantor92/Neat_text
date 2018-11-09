@@ -68,7 +68,7 @@ public:
 	bool Update_Batch(vector<char> Input, int size_batch);
 	vector<float> Update_insidebatch(vector<char> Inputs);
 
-	bool Update_test(vector<char> TestInput);
+	bool Update_test(vector<char> TestInput, float temperature = 0.2f);
 
 
 	int index_act; //indici dell'ultimo iput da mostrare alla rete per portarla nel corretto stato

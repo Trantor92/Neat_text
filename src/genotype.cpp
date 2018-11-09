@@ -968,7 +968,7 @@ void CGenome::SortGenes()
 //
 //  crea e restituisce un genoma, leggendolo da file
 //------------------------------------------------------------------------
-bool CGenome::CreateFromFile(const char* szFileName)
+bool CGenome::CreateFromFile(string szFileName)
 {
   ifstream in(szFileName);
 
@@ -1007,11 +1007,13 @@ bool CGenome::CreateFromFile(const char* szFileName)
 
   for (int n=0; n<NumNeurons; ++n)
   {
-    int    NeuronID, NeuronType;
-    float Activation, SplitX, SplitY;
+	  int    NeuronID, NeuronType;
+	  bool   recurrent;
+      float Activation, SplitX, SplitY;
 
     in >> buffer; in >> NeuronID;
     in >> buffer; in >> NeuronType;
+	in >> buffer; in >> recurrent;
     in >> buffer; in >> Activation;
     in >> buffer; in >> SplitX;
     in >> buffer; in >> SplitY;
@@ -1021,6 +1023,7 @@ bool CGenome::CreateFromFile(const char* szFileName)
                      NeuronID,
                      SplitY,
                      SplitX,
+					 recurrent,
                      Activation);
 
     m_vecNeurons[n] = (gene);
@@ -1053,7 +1056,7 @@ bool CGenome::CreateFromFile(const char* szFileName)
     SLinkGene LinkGene(from,
                        to,
                        enabled,
-                       NextInnovationID++,
+                       ID,//NextInnovationID++,
                        weight,
                        recurrent);
 

@@ -135,9 +135,9 @@ vector<CNeuralNet*> Cga::Epoch(const vector<float> &FitnessScores)
 
   //------------- salvataggio su file delle info sulla generazione corrente ------------------
   //--------------------------- e sui migliori genomi ----------------------------------------
-
+  string name;
   //info sulle specie
-  //string name = "dbg_SpeciesDump_gen" + itos(m_iGeneration) + ".txt";
+  //name = "dbg_SpeciesDump_gen" + itos(m_iGeneration) + ".txt";
   //SpeciesDump(name);//scrittura su file
 
   //scrittura su file della lista delle innovazioni.
@@ -145,9 +145,11 @@ vector<CNeuralNet*> Cga::Epoch(const vector<float> &FitnessScores)
   m_pInnovation->Write("dbg_Innovations.txt", m_iGeneration);
 
   //info sui 4 migliori genomi
-  //name = "Member_0\\dbg_BestGenome_gen" + itos(m_iGeneration) + ".txt";
-  //WriteGenome(name, 0);//scrittura su file
-
+  if (is_improved)
+  {
+	  name = "Member_0\\dbg_BestGenome_gen" + itos(m_iGeneration) + ".txt";
+	  WriteGenome(name, 0);//scrittura su file*/
+  }
   /*name = "Member_1\\dbg_BestGenome_gen" + itos(m_iGeneration) + ".txt";
   WriteGenome(name, 1);//scrittura su file
 
@@ -356,6 +358,8 @@ void Cga::SortAndRecord()
   //si controlla che se il milgior genoma abbia superato il record
   if (m_vecGenomes[0].Fitness() > m_dBestEverFitness)
   {
+	  is_improved = true;
+	  CParams::elenco_best.insert(std::pair<int, int>(m_iGeneration, count_improving++));
     m_dBestEverFitness = m_vecGenomes[0].Fitness();
   }
 
