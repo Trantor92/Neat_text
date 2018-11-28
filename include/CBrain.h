@@ -74,6 +74,8 @@ public:
 	int index_act; //indici dell'ultimo iput da mostrare alla rete per portarla nel corretto stato
 	void Update_until(int index);
 
+	int minRec;
+
 	//fra le altre cose, cancella outputs.
 	void			Reset();
 	
@@ -120,4 +122,6 @@ public:
 		m_pItsBrain = brain; }
 		*/
 	CNeuralNet* GetPhenotype()const { return m_pItsBrain; }
+
+	void Set_minRec(int new_minRec) { minRec = new_minRec; }
 };

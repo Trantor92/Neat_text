@@ -30,6 +30,9 @@ using namespace std;
 
 enum mod_type { MODO_LOCALE, MODO_GLOBALE, MODO_BATCH, MODO_BATCH_INCREMENTALE, MODO_BATCH_MOBILE };
 
+enum update_type { MODO_ZERO, MODO_AGAIN };
+
+enum restart { ONE_SPECIES, CHANGE };
 
 class CParams
 {
@@ -98,6 +101,7 @@ public:
 
   //soglia di compatibilità per la speciazione
   static float dCompatibilityThreshold;
+  static float dCompatibilityThreshold_initial;
 
 
 
@@ -163,6 +167,7 @@ public:
 
   //modalità di addestramento
   static mod_type ModAddestramento;
+  static update_type ModUpdate;
   
   static float soglia_prestazioni;
 

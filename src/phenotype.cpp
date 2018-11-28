@@ -82,8 +82,10 @@ CNeuralNet::~CNeuralNet()
 //	ritorna un vector delle attivazioni dei neuroni di output.
 //------------------------------------------------------------------------
 vector<float> CNeuralNet::Update(const vector<float> &inputs,
-                                  const run_type        type)
+                                  const run_type        type,
+								bool no_bias)
 {
+
   //crea un vector in cui mettere le attivazioni degli output
   vector<float>	outputs;
 
@@ -101,7 +103,7 @@ vector<float> CNeuralNet::Update(const vector<float> &inputs,
     FlushCount = 1;
   }
 
-
+  /*
 
   //si percorre l'intera rete il numero prefissato di volte
   for (int i=0; i<FlushCount; ++i)
@@ -174,8 +176,119 @@ vector<float> CNeuralNet::Update(const vector<float> &inputs,
     {
       m_vecpNeurons[n]->dOutput = 0.f;
     }
-  }
+  }*/
 
+
+  ///faccio un tentativo per risolvere il bug,,,
+
+  int pos_afterInputBias;
+
+  for (int i = 0; i<FlushCount; ++i)
+  {
+	  //per sicurezza si ripulisce il vector delle attivazioni dei neuroni di output
+	  outputs.clear();
+
+	  //indice del neurone che si sta considerando
+	  int cNeuron = 0;
+
+	  //prima di tutto si setta come valore di attivazione dei neuroni di input
+	  //il valore passato alla funzione come inputs
+	  while (m_vecpNeurons[cNeuron]->NeuronType == input)
+	  {
+		  m_vecpNeurons[cNeuron]->dOutput = inputs[cNeuron];
+
+		  ++cNeuron;
+	  }
+
+
+	  //si setta l'attivazione del neurone di bias ad 1
+	  if(!no_bias)
+		  m_vecpNeurons[cNeuron++]->dOutput = 1.f;
+	  else
+		  m_vecpNeurons[cNeuron++]->dOutput = 0.f;
+	  
+
+	  pos_afterInputBias = cNeuron;
+
+	  ///fin qui mi sta anche bene quello che vglio fare è aggiornare l'output solo alla fine
+	  vector<float> nodeOutput_temp;
+	  nodeOutput_temp.resize(m_vecpNeurons.size() - cNeuron);
+	  //si visita l'intera la rete un neurone alla volta
+	  while (cNeuron < m_vecpNeurons.size())
+	  {
+		  //conterrà l'input netto del neurone
+		  float sum = 0.f;
+
+		  //calcolo l'input netto del neurone. sommo le attivazioni di tutti i neuroni aventi link uscenti
+		  //che entrano nel neurone in esame, moltiplicadole per il peso sinaptico della connessione
+		  for (int lnk = 0; lnk<m_vecpNeurons[cNeuron]->vecLinksIn.size(); ++lnk)
+		  {
+			  //estraggo il peso del link entrante
+			  float Weight = m_vecpNeurons[cNeuron]->vecLinksIn[lnk].dWeight;
+
+			  //estraggo l'attivazione del neurone da cui esce questo link
+			  float NeuronOutput =
+				  m_vecpNeurons[cNeuron]->vecLinksIn[lnk].pIn->dOutput;
+
+			  //calcolo l'input netto
+			  sum += Weight * NeuronOutput;
+		  }
+
+		  //ora calcolo e assegno l'attivazione del neurone poichè ne conosco l'input netto
+		 /* m_vecpNeurons[cNeuron]->dOutput =
+			  Sigmoid(sum, m_vecpNeurons[cNeuron]->dActivationResponse);
+			  */
+		  
+			  
+			  //nodeOutput_temp.push_back(Sigmoid(sum, m_vecpNeurons[cNeuron]->dActivationResponse));
+		  nodeOutput_temp[cNeuron - pos_afterInputBias] = Sigmoid(sum, m_vecpNeurons[cNeuron]->dActivationResponse);
+
+
+
+		  //se il neurone è di output allora salvo l'attivazione, che dopo la devo restituire
+		 /* if (m_vecpNeurons[cNeuron]->NeuronType == output)
+		  {
+			  outputs.push_back(m_vecpNeurons[cNeuron]->dOutput);
+		  }*/
+
+		  //next neuron
+		  ++cNeuron;
+	  }
+
+	  //ora associo gli output
+
+	  cNeuron = pos_afterInputBias;
+
+	  while (cNeuron < m_vecpNeurons.size())
+	  {
+		  m_vecpNeurons[cNeuron]->dOutput = nodeOutput_temp[cNeuron - pos_afterInputBias];
+
+		  if (m_vecpNeurons[cNeuron]->NeuronType == output)
+		  {
+			  outputs.push_back(m_vecpNeurons[cNeuron]->dOutput);
+		  }
+
+		  ++cNeuron;
+
+	  }
+
+	  //nodeOutput_temp.clear();
+
+
+  }//next iteration through the network
+
+
+   //E' necessario ripulire le attivazioni dei neuroni nel caso in cui si sia scelta 
+   //l'opzione snapshot in modo tale che quando viene richiamata non si risenta del calcolo precedente.
+   //Se si sceglie active questa cosa non va fatta e ogni iterazioni gli input nuovi lavorano insieme alle
+   //attivazioni gli input precedenti hanno causato.
+  if (type == snapshot)
+  {
+	  for (int n = 0; n<m_vecpNeurons.size(); ++n)
+	  {
+		  m_vecpNeurons[n]->dOutput = 0.f;
+	  }
+  }
 
   //ritorna le attivazioni dei neuroni di output
   return outputs;
@@ -567,4 +680,167 @@ void CNeuralNet::DrawNet(HDC &surface, int Left, int Right, int Top, int Bottom)
 #endif // VIEWER
 
 
+vector<std::map<int, int>> CNeuralNet::Calcola_NodeRecurrency(int size_batch, int minRec)
+{
+	std::map<int, int> m_noderecurrency_in;
+	std::map<int, int> m_noderecurrency_out;
+	std::map<int, int> m_noderecurrency_sum;
+
+
+	int cNeuron = 0; int cNeuronIB = 0;
+	while ((m_vecpNeurons[cNeuron]->NeuronType == input) || (m_vecpNeurons[cNeuron]->NeuronType == bias))
+	{
+		m_noderecurrency_in.insert(std::pair<int, int>(m_vecpNeurons[cNeuron]->iNeuronID, 0));
+		m_noderecurrency_out.insert(std::pair<int, int>(m_vecpNeurons[cNeuron]->iNeuronID, 1));
+
+		m_noderecurrency_sum.insert(std::pair<int, int>(m_vecpNeurons[cNeuron]->iNeuronID, 0));
+
+		++cNeuron; ++cNeuronIB;
+	}
+
+	while ((cNeuron < m_vecpNeurons.size()) && (m_vecpNeurons[cNeuron]->NeuronType == output))
+	{
+		//m_noderecurrency_in.insert(std::pair<int, int>(m_vecpNeurons[cNeuron]->iNeuronID, 1));
+		m_noderecurrency_out.insert(std::pair<int, int>(m_vecpNeurons[cNeuron]->iNeuronID, 0));
+
+		m_noderecurrency_sum.insert(std::pair<int, int>(m_vecpNeurons[cNeuron]->iNeuronID, 1));
+
+		++cNeuron;
+	}
+
+	//in
+	int b = 0;
+	while (b < m_vecpNeurons.size() /*b < size_batch-1*/)
+	{
+		//vector<SLink> vecLinksIn;
+		//int n_linkIN;
+		for (int i = cNeuronIB; i < m_vecpNeurons.size(); i++)
+		{
+			if (m_noderecurrency_in.count(m_vecpNeurons[i]->iNeuronID)==0)//non è presente nella mappa
+			{
+
+				int n_linkIN = m_vecpNeurons[i]->vecLinksIn.size();
+				SNeuron* p_IN;
+				for (int lnk = 0; lnk < n_linkIN; lnk++)
+				{
+					p_IN = m_vecpNeurons[i]->vecLinksIn[lnk].pIn;
+					//int p_IN_ID = p_IN->iNeuronID;
+					if ((m_noderecurrency_in.count(p_IN->iNeuronID) > 0) && (m_noderecurrency_in[p_IN->iNeuronID] == b))
+					{
+						m_noderecurrency_in.insert(std::pair<int, int>(m_vecpNeurons[i]->iNeuronID, b+1 ));
+
+						break;//esco dal for perchè mi basta un nodo
+					}
+					//altrimenti non fa nulla
+				}
+			}
+			//se è già presente nella lista no fa nulla
+		}
+
+		b++;
+	}
+
+
+	int soglia = (size_batch > 2) ? size_batch * (1 + minRec) : 2;
+
+	//out
+	b = 0;
+	while (b < m_vecpNeurons.size() /*b < size_batch - 1*/)
+	{
+		//vector<SLink> vecLinksIn;
+		//int n_linkIN;
+		for (int i = cNeuron; i < m_vecpNeurons.size(); i++)
+		{
+			if (m_noderecurrency_out.count(m_vecpNeurons[i]->iNeuronID) == 0)//non è presente nella mappa
+			{
+
+				int n_linkOUT = m_vecpNeurons[i]->vecLinksOut.size();
+				SNeuron* p_OUT;
+				for (int lnk = 0; lnk < n_linkOUT; lnk++)
+				{
+					p_OUT = m_vecpNeurons[i]->vecLinksOut[lnk].pOut;
+					//int p_IN_ID = p_IN->iNeuronID;
+					if ((m_noderecurrency_out.count(p_OUT->iNeuronID) > 0) && (m_noderecurrency_out[p_OUT->iNeuronID] == b))
+					{
+						m_noderecurrency_out.insert(std::pair<int, int>(m_vecpNeurons[i]->iNeuronID, b + 1));
+
+						if ((m_vecpNeurons[i]->vecLinksIn).size() != 0)
+						{
+							int rec = m_noderecurrency_in[m_vecpNeurons[i]->iNeuronID] + m_noderecurrency_out[m_vecpNeurons[i]->iNeuronID];
+							if (rec <= soglia)
+								m_noderecurrency_sum.insert(std::pair<int, int>(m_vecpNeurons[i]->iNeuronID, rec));
+
+						}
+
+						break;//esco dal for perchè mi basta un nodo
+					}
+					//altrimenti non fa nulla
+				}
+			}
+			//se è già presente nella lista no fa nulla
+		}
+
+		b++;
+	}
+
+	vector<std::map<int, int>> m_noderecurrency_tot; m_noderecurrency_tot.resize(3);
+	m_noderecurrency_tot[0] = m_noderecurrency_in;
+	m_noderecurrency_tot[1] = m_noderecurrency_out;
+	m_noderecurrency_tot[2] = m_noderecurrency_sum;
+
+	return m_noderecurrency_tot;
+}
+
+
+/*
+bool CNeuralNet::Test_recurrency(std::map<int, int> &node_recurrency, vector<int> node_ignoti)
+{
+	//controllare che i nodi in node_ignoti siano tutti distinti, nel caso controllare l'ultimo in lista
+
+	int ID_last = node_ignoti.back();
+
+	if ((std::count(node_ignoti.begin(), node_ignoti.end(), ID_last)) > 1)//nel caso in cui ho percorso un loop 
+	{
+	}
+	else
+	{
+		int n_linkIN = m_vecpNeurons[i]->vecLinksIn.size();
+		SNeuron* p_IN;
+		int min_rec = 0;
+		for (int lnk = 0; lnk < n_linkIN; lnk++)
+		{
+			p_IN = m_vecpNeurons[i]->vecLinksIn[lnk].pIn;
+			if (!node_recurrency.count(p_IN->iNeuronID))
+			{
+				i = GetElementPos(p_IN->iNeuronID);
+
+			}
+
+		}
+	}
+
+
+	
+
+
+	return true;
+
+}
+*/
+
+int CNeuralNet::GetElementPos(int neuron_id)
+{
+
+	for (size_t i = 0; i<m_vecpNeurons.size(); i++)
+	{
+		int d = m_vecpNeurons[i]->iNeuronID;
+
+		if (d == neuron_id)
+		{
+			return i;
+		}
+	}
+
+	return -1;
+}
 

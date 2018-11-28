@@ -176,7 +176,13 @@ public:
 																				     //CalculateDepthPhenotype() in modo
 																					 //ricorsivo
 
+	bool GeneEpuration(int size_batch, int minRec, int generetion);
+
+	void Stampa_recurrency(std::map<int, int> n_ricorrenza, int generation);
 	
+
+	float m_dFitness_perc;
+
 	//---------------------------------accessor methods-------------------------------
 	int	    ID()const{return m_GenomeID;}
 	void    SetID(const int val){m_GenomeID = val;}

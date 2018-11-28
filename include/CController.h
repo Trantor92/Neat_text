@@ -102,6 +102,8 @@ public:
 #else
 	CController();
 
+	CController(const CGenome &ancestor, int generation, int max_gennoimpro, restart restart_mode);
+
 	void		Render();
 #endif // VIEWER
 
@@ -120,7 +122,9 @@ public:
 	void ResetBestFitness();
 
 	int size_batch, size_prev;
+	int minRec;
 	int conteggio_step = -1;//serve per implementare la batch mobile
+	float m_dBestFitnessPerc, m_dBestFitnessPerc_ever;
 
 	//-------------------------------------accessor methods
 
@@ -128,8 +132,26 @@ public:
 	void            PassInfoHandle(HWND hnd) { m_hwndInfo = hnd; }
 #endif // VIEWER
 
-
+	int GetGeneration() const { return m_iGenerations; }
+	Cga* GetPop() const { return m_pPop; }
 	vector<float>  GetFitnessScores()const;
 
+	void SetSizeBatch(int size_B) { size_batch = size_B; }
+	int GetSizeBatch()const { return size_batch; }
+
+	void Set_minRec(int new_minRec) {
+		minRec = new_minRec; 
+
+		for (int i = 0; i < m_NumBrains; ++i)
+			m_vecBrains[i].minRec = minRec;
+		
+		for (int i = 0; i < CParams::iNumBestBrains; ++i)
+			m_vecBestBrains[i].minRec = minRec;
+		
+	}
+
+	float Calcola_BestFitnessPerc();
+
+	int MaxGenAllowedNoImprovement()const { return m_pPop->MaxGenAllowedNoImprovement; }
 };
 

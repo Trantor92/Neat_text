@@ -122,10 +122,12 @@ public:
 
   CInnovation(vector<SLinkGene>   start_genes,
               vector<SNeuronGene> start_neurons);
+
+  //CInnovation(CGenome &ancestor);
 		
   //controlla se innovazione in argomento è gia presente nella lista. 
   //se così ritorna il numero d'innovazione corrispondente, altrimenti -1.
-  int   CheckInnovation(int in, int out, innov_type type);
+  vector<int>   CheckInnovation(int in, int out, innov_type type);
 
   //crea una nuova innovazione e ne restituise il numero d'innovazione
   int   CreateNewInnovation(int in, int out, innov_type type);

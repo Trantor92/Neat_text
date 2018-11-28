@@ -14,6 +14,7 @@ Cga::Cga(int  size,
                     m_iNextGenomeID(0),
                     m_iNextSpeciesID(0),
                     m_dBestEverFitness(0.f),
+					m_dBestEverFitness_perc(0.f),
                     m_dTotFitAdj(0.f),
                     m_dAvFitAdj(0.f)
 {
@@ -35,7 +36,48 @@ Cga::Cga(int  size,
 
 }
 
+Cga::Cga(int  size,
+	int generation,
+	const CGenome &ancestor,
+	float fitness_ancestor,
+	float fitness_ancestor_perc) :m_iPopSize(size),
+	m_iGeneration(generation),
+	m_pInnovation(NULL),
+	m_iNextGenomeID(0/*ancestor.ID()+1*/),//cè il rischio che diventino troppo grandi
+	m_iNextSpeciesID(0),
+	m_dBestEverFitness(fitness_ancestor),
+	m_dBestEverFitness_perc(fitness_ancestor_perc),
+	m_dTotFitAdj(0.f),
+	m_dAvFitAdj(0.f)
+{
+	m_vecGenomes.resize(m_iPopSize);
 
+	m_vecGenomes[0] = (ancestor);
+	//crea la popolazione di genomi
+	for (int i = 1; i<m_iPopSize; ++i)
+	{
+		m_vecGenomes[i] = (ancestor);
+
+		m_vecGenomes[i].SetID(m_iNextGenomeID++);
+
+		//eventuale mutazione dei pesi
+		m_vecGenomes[i].MutateWeights(CParams::dMutationRate,
+			CParams::dProbabilityWeightReplaced,
+			CParams::dMaxWeightPerturbation);
+
+		//eventuale mutazione del parametro beta dei nodi
+		m_vecGenomes[i].MutateActivationResponse(CParams::dActivationMutationRate,
+			CParams::dMaxActivationPerturbation);
+	}
+
+	
+
+	//crea la lista delle innovazioni sfruttando come modello il primo genoma, 
+	//tanto sono tutti strutturalmente identici	
+	m_pInnovation = new CInnovation(m_vecGenomes[0].LinkGenes(), m_vecGenomes[0].NeuronGenes());
+
+	MaxGenAllowedNoImprovement = CParams::iNumGensAllowedNoImprovement;
+}
 
 //------------------------------------- destructor -----------------------------
 //  cancella la lista delle innovazioni
@@ -142,7 +184,7 @@ vector<CNeuralNet*> Cga::Epoch(const vector<float> &FitnessScores)
 
   //scrittura su file della lista delle innovazioni.
   //questo file viene riscritto ad ogni generazione
-  m_pInnovation->Write("dbg_Innovations.txt", m_iGeneration);
+  //m_pInnovation->Write("dbg_Innovations.txt", m_iGeneration);
 
   //info sui 4 migliori genomi
   if (is_improved)
@@ -494,6 +536,9 @@ void Cga::SpeciateAndCalculateSpawnLevels()
 
 			  if (m_vecSpecies[spc].BestFitness() < FitnessOfBest)
 				  m_vecSpecies[spc].GensNoImprovement(0);
+
+
+			  m_vecSpecies[spc].SetBestFitness(FitnessOfBest);
 		  }
 	  }
   }
@@ -619,9 +664,14 @@ void Cga::AdjustCompatibilityThreshold()
   }
 
   //poche specie, abbasso la soglia
-  else if (m_vecSpecies.size() <= (CParams::iMaxNumberOfSpecies/3 + 1))
+ /* else if (m_vecSpecies.size() <= (CParams::iMaxNumberOfSpecies/3 + 1))
   {
     CParams::dCompatibilityThreshold -= ThresholdIncrement;
+  }*/
+
+  else if (m_vecSpecies.size() <= 1)
+  {
+	  CParams::dCompatibilityThreshold -= ThresholdIncrement;
   }
 
   return;  
@@ -1010,7 +1060,7 @@ int Cga::Calcola_MaxGenerationNoImprovement()
 		{
 			int GenNoImproBest = m_vecSpecies[i].GensNoImprovement();
 
-			return MaxGenAllowedNoImprovement = (GenNoImproBest > CParams::iNumGensAllowedNoImprovement) ?
+			return MaxGenAllowedNoImprovement = ((MaxGenAllowedNoImprovement > CParams::iNumGensAllowedNoImprovement) || (GenNoImproBest > CParams::iNumGensAllowedNoImprovement)) ?
 				((MaxGenAllowedNoImprovement < GenNoImproBest) ? GenNoImproBest : MaxGenAllowedNoImprovement) :
 				CParams::iNumGensAllowedNoImprovement;
 		}

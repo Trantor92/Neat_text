@@ -144,7 +144,7 @@ public:
   enum run_type{snapshot, active};
 
   //esegue il calcolo della rete neurale, facendo 'diffondere' le attivazioni degli input
-  vector<float>  Update(const vector<float> &inputs, const run_type type);
+  vector<float>  Update(const vector<float> &inputs, const run_type type, bool no_bias = false);
 
   //funzione di attivazione del neurone
   float		  Sigmoid(float netinput, float response);
@@ -161,6 +161,13 @@ public:
 #endif // VIEWER
 
 
+  vector<std::map<int,int>> Calcola_NodeRecurrency(int size_batch, int minRec);
+
+  //bool Test_recurrency(std::map<int, int> &node_recurrency, vector<int> node_ignoti);
+
+  //dato il numero identificativo di un nodo, questa funzione restituisce il suo indice
+  //nel vector dei nodi m_vecpNeurons
+  int     GetElementPos(int neuron_id);
 
   //----------- accessor function ----------------------
 

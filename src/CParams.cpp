@@ -39,6 +39,7 @@ float CParams::dActivationMutationRate   = 0.f;
 float CParams::dMaxActivationPerturbation= 0.f;
 
 float CParams::dCompatibilityThreshold   = 0.f;
+float CParams::dCompatibilityThreshold_initial = 0.f;
 
 int CParams::iOldAgeThreshold             = 0;
 float CParams::dOldAgePenalty            = 0.f;
@@ -62,7 +63,8 @@ vector<char> CParams::TestInputs;
 std::map<char, int> CParams::dictionary;
 std::map<int, int> CParams::elenco_best;
 
-mod_type CParams::ModAddestramento = MODO_GLOBALE;
+mod_type CParams::ModAddestramento = MODO_BATCH;
+update_type CParams::ModUpdate = MODO_ZERO;
 float CParams::soglia_prestazioni = 35.f;
 
 /*vector<vector<float>> CParams::TrainingOutputs;
@@ -150,8 +152,8 @@ bool CParams::LoadInParameters(char* szFileName)
   grab >> iNameTest;
 
 
-
-
+  dCompatibilityThreshold_initial = dCompatibilityThreshold;
+  
 
   ////////////// LETTURA E CARICAMENTO //////////////////////////
 

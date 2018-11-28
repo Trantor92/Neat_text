@@ -66,6 +66,8 @@ private:
 	//fitness migliore mai trovata fino ad ora
 	float            m_dBestEverFitness;
 
+	float			m_dBestEverFitness_perc;
+
 
 	
 
@@ -128,6 +130,12 @@ public:
 		int   inputs,
 		int   outputs);
 
+	Cga(int size,
+		int generation,
+		const CGenome &ancestor,
+		float fitness_ancestor,
+		float fitness_ancestor_perc);
+
 	~Cga();
 
 	int MaxGenAllowedNoImprovement;
@@ -144,6 +152,8 @@ public:
 
 	//ritorna i fenotipi dei migliori individui in m_vecBestGenomes
 	vector<CNeuralNet*>  GetBestPhenotypesFromLastGeneration();
+
+	
 
 #ifdef VIEWER
 	//Disegna le statistiche relative alla speciazione ed in particolare quelle
@@ -171,7 +181,10 @@ public:
 	//-------------------- accessor methods ----------------------------------------
 	int					Generation() { return m_iGeneration; }
 
+	CGenome Get_BestGenome() const { return m_vecBestGenomes[0]; }
+
 	int					NumSpecies()const{return m_vecSpecies.size();}
+	vector<CSpecies>	GetSpecies()const { return m_vecSpecies; }
 
 	float				BestEverFitness()const{return m_dBestEverFitness;}
 	float				Fitness_Best(int pos) { return m_vecBestGenomes[pos].Fitness(); }
@@ -188,6 +201,9 @@ public:
 	}
 
 	void Set_is_improved(bool is) { is_improved = is; }
+
+	void Set_MaxGenAllowedNoImprovement(int max_gennoimpro) { MaxGenAllowedNoImprovement = max_gennoimpro; }
+
 };
 
 //#endif

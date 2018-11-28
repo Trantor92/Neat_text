@@ -84,6 +84,8 @@ CController::CController()
 
 	size_batch = size_prev = 0;
 
+	//SetSizeBatch(1);
+
 	//creazione della popolazione a cui applicare l'algoritmo genetico, associata ai Brains
 	m_pPop = new Cga(CParams::iPopSize,
 		CParams::iNumInputs,
@@ -97,7 +99,56 @@ CController::CController()
 	{
 		m_vecBrains[i].SetBrain(pBrains[i]);
 	}
+
+	m_dBestFitnessPerc_ever = 0.f;
 }
+
+CController::CController(const CGenome &ancestor, int generation, int max_gennoimpro, restart restart_mode)
+{
+	m_NumBrains = CParams::iPopSize;
+
+	m_iGenerations = generation;
+
+	m_vecBrains.resize(m_NumBrains);
+	//creazione dei Brains
+	for (int i = 0; i < m_NumBrains; ++i)
+	{
+		m_vecBrains[i] = (CBrain());
+	}
+
+	m_vecBestBrains.resize(CParams::iNumBestBrains);
+	//creazione dell'array che conterrà i migliori Brains
+	for (int i = 0; i < CParams::iNumBestBrains; ++i)
+	{
+		m_vecBestBrains[i] = (CBrain());
+	}
+
+	size_batch = size_prev = 0;
+
+	//creazione della popolazione a cui applicare l'algoritmo genetico, associata ai Brains
+	if(restart_mode == ONE_SPECIES)
+		m_pPop = new Cga(CParams::iPopSize, generation, ancestor, ancestor.Fitness(), 0.f);
+	else if(restart_mode == CHANGE)
+		m_pPop = new Cga(CParams::iPopSize, generation, ancestor, 0.f, 0.f);
+
+	/*questo mantiene in memoria gen no impro*/
+	m_pPop->Set_MaxGenAllowedNoImprovement(max_gennoimpro);
+
+	//creazione dei fenotipi associati ai genotipi della popolazione
+	vector<CNeuralNet*> pBrains = m_pPop->CreatePhenotypes();
+
+	//assegnazione dei fenotipi ai Brains
+	for (int i = 0; i < m_NumBrains; i++)
+	{
+		m_vecBrains[i].SetBrain(pBrains[i]);
+	}
+
+	CParams::dCompatibilityThreshold = CParams::dCompatibilityThreshold_initial;
+
+	m_dBestFitnessPerc_ever = 0.f;
+}
+
+
 #endif // VIEWER
 
 
@@ -141,7 +192,8 @@ bool CController::Update(ofstream &out0/*, ofstream &out1, ofstream &out2, ofstr
 	{
 		if (CParams::ModAddestramento == MODO_BATCH)
 		{
-			size_batch = CParams::TrainingInputs.size() * 0.9f;
+			//size_batch = CParams::TrainingInputs.size() * 0.9f;
+			//size_batch = 10;
 			size_prev = CParams::TrainingInputs.size() - size_batch;
 		}
 		else if((m_vecBestBrains[0].m_dFitness_perc >= CParams::soglia_prestazioni) /*(m_vecBestBrains[0].Fitness() >= CParams::soglia_prestazioni)*/ || (m_iGenerations == 0))//condizione che fa cambiare il problema
@@ -448,16 +500,22 @@ bool CController::Update(ofstream &out0/*, ofstream &out1, ofstream &out2, ofstr
 
 				fit_perc = m_vecBestBrains[i].EndOfRunCalculations_Batch(CParams::TrainingInputs, size_batch);
 
+				
 
 				//stampa le attivazioni dei nodi output per ogni array di training 
 				string name_file_output = "Member_" + itos(i) + "\\Trainoutput_" + itos(m_iGenerations - 1) + ".txt";
 				if (i == 0)
 				{
+					m_dBestFitnessPerc = fit_perc;
+
+
+
 					if (m_pPop->is_improved)
 						m_vecBestBrains[i].Write_output(name_file_output, TRAIN);
 
 					out0 << m_vecBestBrains[i].Fitness() << "\t" << fit_perc << "\t" 
-						<< m_vecBestBrains[i].m_dFitness_batch << "\t" << m_vecBestBrains[i].m_dFitness_batch_perc << endl;
+						<< m_vecBestBrains[i].m_dFitness_batch << "\t" << m_vecBestBrains[i].m_dFitness_batch_perc << "\t"
+						<< size_batch << endl;
 				}
 
 				/*
@@ -930,4 +988,83 @@ void CController::Testing_Networks()
 
 	}
 	//generare il file di test associato variando la temperatura
+}
+
+float CController::Calcola_BestFitnessPerc()
+{
+
+	int size_input = CParams::TrainingInputs.size();
+	
+	
+	//posso sfruttare l'uguaglianza fra vector == restituisce true solo se hanno stessa dimensione e stessi elementi
+	//forse posso creare una mappa di vector di char che punta al char successivo,
+	vector<char> input_batch;
+	input_batch.resize(size_batch);
+
+
+	list<pair<vector<char>, char>> predictions;
+	map<vector<char>, char> predictions_checked;
+	int i, count = 0;
+
+
+	//le mappe non vanno bene perché posso avere solo chiavi uniche, forse si può usare la lista di pair<vector<char>, char>
+	while (size_input - (size_batch + count))
+	{
+		for (i = 0; i < size_batch; i++)
+		{
+			input_batch[i] = CParams::TrainingInputs[count + i];
+		}
+
+		predictions.push_back(pair<vector<char>, char>(input_batch, CParams::TrainingInputs[count + i]));
+
+		++count;
+	}
+
+	//ora ho tutti i batch e le previsioni voglio, per ogni vector distinto, contare la frazione del carattere in previsione che
+	//si propone più spesso.
+	list<pair<vector<char>, char>>::iterator index, index_inner;
+	index = predictions.begin();
+
+	map<char, int> occurrency;
+	map<char, int>::iterator it_occ;
+
+	int sum = 0;
+
+	while (index != predictions.end())
+	{
+		if (predictions_checked.count(index->first) == 0)
+		{
+			//testare tutte le second che hanno queso first
+			for (index_inner = index; index_inner != predictions.end(); index_inner++)
+			{
+				if (index->first == index_inner->first)//se il batch è uguale aggiungo il second ad occurrency
+				{
+					if (occurrency.count(index_inner->second) == 0)
+						occurrency.insert(pair<char, int>(index_inner->second, 1));
+					else
+						occurrency[index_inner->second]++;
+				}
+			}
+
+			it_occ = occurrency.begin();
+			int max = 0;
+
+			while (it_occ != occurrency.end())
+			{
+				if (it_occ->second > max)
+					max = it_occ->second;
+
+				++it_occ;
+			}
+
+			sum += max;
+			occurrency.clear();//ripulisco per il prossimo batch distinto
+
+			predictions_checked.insert(*index);
+		}
+
+		++index;
+	}
+
+	return 100.f*(sum / ((float)predictions.size()));
 }

@@ -9,10 +9,13 @@
 #include <string>
 #include <iostream>
 #include <vector>
+#include <list>
 
-/*#ifdef _WIN32
+/*
+#ifdef _WIN32
 #define VIEWER
-#endif // _WIN32*/
+#endif // _WIN32
+*/
 
 #ifdef VIEWER
 #include <windows.h>

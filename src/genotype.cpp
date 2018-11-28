@@ -54,9 +54,10 @@ m_iSpecies(0)
 	//crea un gene di linkche connette ogni nodo di input ad ogni nodo di output 
 	//assegna un peso casuale in -1 < w < 1, con distribuzione di probabilità lineare a tenda centrata in 0
 
-	//m_vecLinks.resize((inputs + 1)*outputs);
 
-	for (int i = 0; i<inputs + 1; i++)
+
+	//li ho inglobati nella funzione di prima
+/*	for (int i = 0; i<inputs + 1; i++)
 	{
 		for (int j = 0; j<outputs; j++)
 		{
@@ -68,6 +69,78 @@ m_iSpecies(0)
 		}
 	}
 
+	*/
+
+	//tentare di cominciare non minimally ma con strati
+	//così ho creato una rete a strati fully connected
+
+	int strati_hidden = 0;
+	int size_hidden = (inputs + outputs);// (inputs + outputs) / 2;
+
+	//m_vecLinks.clear();
+
+	//crea i geni dei nodi di output
+	float HiddenRowSlice = 1 / (float)(outputs + 1);//solo scopo grafico
+	float Y_slice = 1.f / (strati_hidden + 1), Y_pos;
+
+	int n_inf, n_sup;
+	int indice_zero_in, indice_zero_out;
+	
+	for (int layer = 0; layer < strati_hidden; layer++)
+	{
+		Y_pos = 1.f - (layer + 1)*Y_slice;
+		//creo i nodi
+		for (int i = 0; i < size_hidden; i++)
+		{
+			m_vecNeurons.push_back(SNeuronGene(hidden, (inputs + outputs + 1) + layer * size_hidden + i, Y_pos, (i + 1) * HiddenRowSlice));
+		}
+
+	}
+
+	for(int layer = 0; layer < strati_hidden+1; layer++)
+	{
+		n_inf = (layer == 0) ? inputs : size_hidden;
+
+		n_sup = (layer == strati_hidden) ? outputs : size_hidden;
+		indice_zero_out = (layer == strati_hidden) ? inputs+1 : (inputs + outputs + 1) + layer * size_hidden;
+		indice_zero_in = (layer == 0) ? 0 : (inputs + outputs + 1) + (layer-1) * size_hidden;
+		//creo i link
+		for (int i = 0; i < n_inf; i++)
+		{
+			for (int j = 0; j < n_sup; j++)
+			{
+				m_vecLinks.push_back(SLinkGene(m_vecNeurons[indice_zero_in + i].iID,
+					m_vecNeurons[indice_zero_out + j].iID,
+					true,
+					NumNeurons() + NumGenes(),
+					RandomClamped()));
+			}
+		}
+
+		//link per il bias
+		for (int j = 0; j < n_sup; j++)
+		{
+			m_vecLinks.push_back(SLinkGene(m_vecNeurons[inputs].iID,
+				m_vecNeurons[indice_zero_out + j].iID,
+				true,
+				NumNeurons() + NumGenes(),
+				RandomClamped()));
+		}
+
+		//qui si possono mettere i link recurrent sullo stesso strato
+
+		for (int i = 0; i < n_sup; i++)
+			for (int j = 0; j < n_sup; j++)
+			{
+				if(i!=j)
+					m_vecLinks.push_back(SLinkGene(m_vecNeurons[indice_zero_out + i].iID,
+						m_vecNeurons[indice_zero_out + j].iID,
+						true,
+						NumNeurons() + NumGenes(),
+						RandomClamped()));
+			}
+	}	
+	
 }
 
 //------------------------------------------------------------------------
@@ -557,8 +630,9 @@ void CGenome::AddLink(float       MutationRate,
   }
 
   //controlla nella lista delle innovazioni se questa esiste già
-  int id = innovation.CheckInnovation(ID_neuron1, ID_neuron2, new_link);
-
+  vector<int> link_innovs;
+  link_innovs = innovation.CheckInnovation(ID_neuron1, ID_neuron2, new_link);
+  int id = (link_innovs.empty()) ? -1 : link_innovs.back();
 
   //l'innovazione non esista ancora quindi va creata
   if ( id < 0)
@@ -664,21 +738,39 @@ void CGenome::AddNeuron(float       MutationRate,
   se l'innovazione esiste ma quel nodo non è presente nell'individuo in questione non si deve creare una nuova innovazione.
   se l'innovazione non è ancora stata creata va creata.*/
 
+  vector<int> checked_innovs;
 
   //si controlla se l'innovazione data da questo nuovo nodo sia già stata creata
-  int id = innovations.CheckInnovation(from,
+  checked_innovs = innovations.CheckInnovation(from,
 	  to,
 	  new_neuron);
+
+  sort(checked_innovs.begin(),checked_innovs.end());
+
+  int id = (checked_innovs.empty()) ? -1: checked_innovs.front();
 
   if (id >= 0)//se una rete nella popolazione ha già sviluppato l'innovazione
 			  //di avere un nuovo nodo fra gli stessi due nodi: from e to
   {
-    int NeuronID = innovations.GetNeuronID(id);//ID del neurone salvato nella lista delle innovazioni
+	  id = -1;
+	  int NeuronID;
+	  for (int i = 0; i < checked_innovs.size(); i++)
+	  {
+		  NeuronID = innovations.GetNeuronID(checked_innovs[i]);//ID del neurone salvato nella lista delle innovazioni
 
-    if (AlreadyHaveThisNeuronID(NeuronID))//se l'ID del neurone è già presente nella rete
-    {									  //bisogna creare una nuova innovazione
-      id = -1;
-    }
+		  if (!AlreadyHaveThisNeuronID(NeuronID))//se l'ID del neurone è già presente nella rete
+		  {									  //bisogna creare una nuova innovazione
+			  id = 1;
+		  }
+	  }
+
+	  /*int NeuronID = innovations.GetNeuronID(id);//ID del neurone salvato nella lista delle innovazioni
+
+	  if (AlreadyHaveThisNeuronID(NeuronID))//se l'ID del neurone è già presente nella rete
+	  {									  //bisogna creare una nuova innovazione
+		  id = -1;
+	  }
+    */
   }
   
   if (id < 0)//l'innavozione o non esiste ancora, o è il caso speciale sopra menzionato; quindi va creata
@@ -741,17 +833,34 @@ void CGenome::AddNeuron(float       MutationRate,
     
 	m_vecLinks.resize(m_vecLinks.size() + 1, link2);
   }
-
   else//non si deve creare una nuova innovazione
   {
-    //l'innovazione esiste già quindi bisogna ricavare dalla lista delle innovazioni
-	//le informazioni: per il nodo e i due link
-    int NewNeuronID = innovations.GetNeuronID(id);
-		
 
-    int idLink1 = innovations.CheckInnovation(from, NewNeuronID, new_link);
-    int idLink2 = innovations.CheckInnovation(NewNeuronID, to, new_link);
+	  //l'innovazione esiste già quindi bisogna ricavare dalla lista delle innovazioni
+	  //le informazioni: per il nodo e i due link
+	  
+	int NewNeuronID;
 
+	for (int i = 0; i < checked_innovs.size(); i++)
+		{
+			NewNeuronID = innovations.GetNeuronID(checked_innovs[i]);
+
+			if (!AlreadyHaveThisNeuronID(NewNeuronID))//se l'ID del neurone è già presente nella rete
+			{									  //bisogna creare una nuova innovazione
+				break;
+			}
+
+	}
+    
+	  //int NewNeuronID = innovations.GetNeuronID(id); 
+
+		vector<int> link_innovs;
+		link_innovs = innovations.CheckInnovation(from, NewNeuronID, new_link);
+		int idLink1 = (link_innovs.empty()) ? -1: link_innovs.front();
+
+		link_innovs = innovations.CheckInnovation(NewNeuronID, to, new_link);
+		int idLink2 = (link_innovs.empty()) ? -1: link_innovs.front();
+   
 
     //errore: questo non dovrebbe succedere poichè deve esistere l'innovazione nella lista
     if ( (idLink1 < 0) || (idLink2 < 0) )
@@ -1107,4 +1216,154 @@ bool CGenome::Write(ostream &stream)
 
 	return true;
 
+}
+
+
+bool CGenome::GeneEpuration(int size_batch,int minRec, int generation)
+{
+	//bisogna togliere tutti geni aventi ricorrenza superiore a size_batch
+	bool is_eliminating = false;
+	//forse non serve..
+	CNeuralNet* p_phenotype = this->CreatePhenotype();
+
+	vector<std::map<int, int>> n_ricorrenza = p_phenotype->Calcola_NodeRecurrency(size_batch, minRec);//ID_Neuron - #ricorrenza
+	
+	string name;
+
+	/*map<int, int>::iterator it = n_ricorrenza[2].begin();
+	while(it != n_ricorrenza[2].end())
+	{
+		if ((it->second) == size_batch)
+		{
+			is_eliminating = true;
+			break;
+		}
+
+		++it;
+	}
+
+	if(is_eliminating)
+		name = "Member_0\\#ricorrenza_" + itos(generation) + ".txt";
+	else
+		name = "Member_0\\#ricorrenzaNOTAPP_" + itos(generation) + ".txt";
+*/
+
+	name = "Member_0\\#ricorrenza_" + itos(generation) + ".txt";
+	is_eliminating = true;
+	/*if(size_batch < 4)
+		if (n_ricorrenza[2].size() < m_vecNeurons.size())
+		{
+			is_eliminating = true;
+			//name = "Member_0\\#ricorrenza_" + itos(generation) + ".txt";
+		}
+		else
+			name = "Member_0\\#ricorrenzaNOTAPP_" + itos(generation) + ".txt";
+	*/
+																					 
+	//Stampa_recurrency(n_ricorrenza[2], generation);
+	//string name = "Member_0\\#ricorrenza_" + itos(generation) + ".txt";
+
+	ofstream file_ricorrenza(name);
+
+
+	//id
+	file_ricorrenza << "GenomeID: " << m_GenomeID << endl;
+
+	//nodi
+	file_ricorrenza << "NumNeurons: " << m_vecNeurons.size();
+
+
+	//in n_ricorrenza sono presenti solo i nodi che devono sopravvivere poichè hanno ricorrenza <= size_batch
+
+	int soglia = (size_batch > 2) ? size_batch * (1 + minRec) : 2;
+
+	//prima elimino i neuroni 
+	int i = 0;
+	while(i < m_vecNeurons.size())
+	{
+		if (n_ricorrenza[2].count(m_vecNeurons[i].iID) == 0)
+		{
+			if ((n_ricorrenza[0].count(m_vecNeurons[i].iID) == 0) || (n_ricorrenza[1].count(m_vecNeurons[i].iID) == 0))
+				file_ricorrenza << m_vecNeurons[i] << " #recurrency: " <<  "DISJOINT";
+			else
+				file_ricorrenza << m_vecNeurons[i] << " #recurrency: " << n_ricorrenza[0][m_vecNeurons[i].iID] +
+				n_ricorrenza[1][m_vecNeurons[i].iID] << " OUT RANGE";
+
+			m_vecNeurons.erase(m_vecNeurons.begin() + i);
+			
+		}
+		else
+		{
+			file_ricorrenza << m_vecNeurons[i] << " #recurrency: " << n_ricorrenza[2][m_vecNeurons[i].iID];
+
+			i++;
+		}
+
+
+	}
+	
+	//link
+	file_ricorrenza << "\nNumLinks: " << m_vecLinks.size();
+
+	//poi elimino i link
+	i = 0; int link_rec, link_recIN_From, link_recIN_To, link_recOUT_From ,link_recOUT_To ;
+	while (i < m_vecLinks.size())
+	{
+		file_ricorrenza << m_vecLinks[i] << " #recurrency: ";
+
+		link_recIN_From = (n_ricorrenza[0].count(m_vecLinks[i].FromNeuron) == 0) ? -1 : n_ricorrenza[0][m_vecLinks[i].FromNeuron];
+		link_recIN_To = (n_ricorrenza[0].count(m_vecLinks[i].ToNeuron) == 0) ? -1 : n_ricorrenza[0][m_vecLinks[i].ToNeuron];
+
+		link_recOUT_From = (n_ricorrenza[1].count(m_vecLinks[i].FromNeuron) == 0) ? -1 : n_ricorrenza[1][m_vecLinks[i].FromNeuron];
+		link_recOUT_To = (n_ricorrenza[1].count(m_vecLinks[i].ToNeuron) == 0) ? -1 : n_ricorrenza[1][m_vecLinks[i].ToNeuron];
+
+
+		link_rec = ((link_recIN_From == -1) || (link_recOUT_To == -1)) ? -1 : link_recIN_From + link_recOUT_To + 1;
+
+		if ((n_ricorrenza[2].count(m_vecLinks[i].FromNeuron) == 0) || (n_ricorrenza[2].count(m_vecLinks[i].ToNeuron) == 0) ||
+			/*((m_vecLinks[i].FromNeuron == m_vecLinks[i].ToNeuron) && (n_ricorrenza[2][m_vecLinks[i].FromNeuron] == size_batch * (1 + minRec))) ||*/
+			((link_rec > soglia) || (link_rec == -1)) ||
+			(m_vecLinks[i].bEnabled == false))
+		{
+
+			//(((link_recIN_From == -1) || (link_recIN_To == -1)) ? ("DJ") : (itos(link_recIN_From + link_recIN_To)))
+
+			file_ricorrenza << (((link_recIN_From == -1) || (link_recOUT_From == -1)) ? ("DJ") : (itos(link_recIN_From + link_recOUT_From)))
+				<< "->" << (((link_recIN_To == -1) || (link_recOUT_To == -1)) ? ("DJ") : (itos(link_recIN_To + link_recOUT_To)))
+				<< " (" << ((link_rec==-1)? "DJ) DISJOINT" : (itos(link_rec) + ") OUT RANGE" ));
+
+			m_vecLinks.erase(m_vecLinks.begin() + i);
+		}
+		else
+		{
+			file_ricorrenza << n_ricorrenza[2][m_vecLinks[i].FromNeuron] << "->" << n_ricorrenza[2][m_vecLinks[i].ToNeuron] 
+				<< " (" << link_rec << ") IN RANGE";
+
+			i++;
+		}
+	}
+
+	file_ricorrenza.close();
+
+	return is_eliminating;
+}
+
+void CGenome::Stampa_recurrency(std::map<int, int> n_ricorrenza, int generation)
+{
+	string name = "#ricorrenza_" + itos(generation) + ".txt";
+
+	ofstream file_ricorrenza(name);
+
+	for (int i = 0; i < m_vecNeurons.size(); i++)
+	{
+		if (!(n_ricorrenza.count(m_vecNeurons[i].iID)))
+			file_ricorrenza << m_vecNeurons[i] << " #recurrency: " << "OUT RANGE";
+		else
+			file_ricorrenza << m_vecNeurons[i] << " #recurrency: " << n_ricorrenza[m_vecNeurons[i].iID];
+	}
+
+
+	file_ricorrenza.close();
+
+	
 }

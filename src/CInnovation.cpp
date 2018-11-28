@@ -8,20 +8,25 @@
 CInnovation::CInnovation(vector<SLinkGene>   start_genes,
                          vector<SNeuronGene> start_neurons)
 {
-	m_NextNeuronID			= 0;
+	//m_NextNeuronID			= 0;
 	m_NextInnovationNum		= 0;
 
 	//aggiunge le innvazioni dei nodi
 
 	int nd;
-
+	int max_id = 0;
 	m_vecInnovs.resize(start_neurons.size() + start_genes.size());
 	for (nd=0; nd<start_neurons.size(); ++nd)
 	{
 		 m_vecInnovs[nd] = (SInnovation(start_neurons[nd],
 							   m_NextInnovationNum++,
-							   m_NextNeuronID++));
+							 start_neurons[nd].iID));
+
+		 max_id = (max_id < start_neurons[nd].iID) ? start_neurons[nd].iID : max_id;
+
 	 }
+
+	m_NextNeuronID = max_id + 1;
 
 	 //aggiunge le innovazioni dei link
 	 for (int cGen = 0; cGen<start_genes.size(); ++cGen) 
@@ -37,15 +42,57 @@ CInnovation::CInnovation(vector<SLinkGene>   start_genes,
 		}
 }
 
+/*
+CInnovation::CInnovation(CGenome &ancestor)
+{
+	//m_NextNeuronID = 0;
+	m_NextInnovationNum = 0;
+
+	//aggiunge le innvazioni dei nodi
+
+	int nd;
+
+	int max_id = 0;
+	m_vecInnovs.resize(ancestor.NeuronGenes().size() + ancestor.LinkGenes().size());
+	for (nd = 0; nd < ancestor.NeuronGenes().size(); ++nd)
+	{
+		m_vecInnovs[nd] = (SInnovation(ancestor.NeuronGenes()[nd],
+			m_NextInnovationNum++,
+			ancestor.NeuronGenes()[nd].iID));
+
+		max_id = (max_id < ancestor.NeuronGenes()[nd].iID) ? ancestor.NeuronGenes()[nd].iID : max_id;
+	}
+
+	m_NextNeuronID = max_id + 1;
+
+	//aggiunge le innovazioni dei link
+	for (int cGen = 0; cGen < ancestor.LinkGenes().size(); ++cGen)
+	{
+		SInnovation NewInnov(ancestor.LinkGenes()[cGen].FromNeuron,
+			ancestor.LinkGenes()[cGen].ToNeuron,
+			new_link,
+			m_NextInnovationNum);
+
+		m_vecInnovs[nd + cGen] = (NewInnov);
+
+		++m_NextInnovationNum;
+	}
+
+}
+*/
+
 //---------------------------CheckInnovation------------------------------
 //
 //	controlla se innovazione in argomento è gia presente nella lista. 
 //  se così ritorna il numero d'innovazione corrispondente, altrimenti -1.
 //------------------------------------------------------------------------
-int CInnovation::CheckInnovation(int in, int out, innov_type type)
+vector<int> CInnovation::CheckInnovation(int in, int out, innov_type type)
 {
 	//itera su tutte le innovazioni presenti nella lista cerca una corrispondenza
 	//esatta dei tre argomenti.
+
+	vector<int> innovs;
+
 	for (int inv=0; inv<m_vecInnovs.size(); ++inv)
 	{
 		if ((m_vecInnovs[inv].NeuronIn == in)   && 
@@ -53,12 +100,12 @@ int CInnovation::CheckInnovation(int in, int out, innov_type type)
 			(m_vecInnovs[inv].InnovationType == type))
 		{			
 			//trovata una corrispondenza quindi ne ritorna il numero d'innovazione
-			return m_vecInnovs[inv].InnovationID;
+			innovs.resize(innovs.size()+1, m_vecInnovs[inv].InnovationID);
 		}
 	}
 	
 	//se non si è trovata una corrispondenza allora ritorna -1
-	return -1;
+	return innovs;
 }
 
 //--------------------------CreateNewInnovation---------------------------
